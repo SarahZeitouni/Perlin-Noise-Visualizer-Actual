@@ -7,6 +7,8 @@ typedef struct{
 vector2 randomGradient(int ix, int iy){
     //this is a bit confusing to me, I would like to do my own research into 
     //  hashing random functions
+    //(this is also a function that i took from soneone else's hash, 
+    //   i did not write this code organically)
     const unsigned w  = 8 * sizeof(unsigned);
     const unsigned s  = w/2;
     unsigned a = ix, b = iy;
@@ -45,6 +47,9 @@ float lerp(float a0, float a1, float w){
     //basically what this does is it makes sure that numbers close together
     //  get similar outputs from our random function
 
+    //all this is is a func to separate the formula for linear interpolation
+
+    return (a0 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
 
@@ -59,5 +64,19 @@ float perlin(float x, float y){
     float sx = x - (float)x0;
     float sy = y - (float)y0;
 
-    return 0.0;
+    //compare + interpolate top two corners
+    float n0 = dotGridGradient(x0, y0, x, y);
+    float n1 = dotGridGradient(x1, y0, x, y);
+    float ix0 = lerp(n0, n1, sx);
+
+    //compare + interpolate bottom two corners
+    n0 = dotGridGradient(x0, y1, x, y);
+    n1 = dotGridGradient(x1, y1, x, y);
+    float ix1 = lerp(n0, n1, sx);
+
+    //lerp the final corners
+    float value = lerp(ix0, ix1, sy);
+    
+
+    return value;
 }
