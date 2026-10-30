@@ -4,6 +4,8 @@
 #include <raylib.h>
 #include <raymath.h>
 
+Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scale);
+
 // spans from origin = (a, b, c) to (a+1, b+1, c+1)
 // z+ (up)  7-----6  _. y+ (back)
 //     .   /|    /|  /|
@@ -28,5 +30,9 @@ void Voxel_resetDisplay(Voxel* voxel);
 bool Voxel_isVisible(Voxel* voxel);
 
 Vector3 Voxel_getOrigin(Vector3 pos);
+
+void Voxel_draw(Voxel* voxel, float x_offset, float y_offset, float scale);
+
+void Voxel_forceDraw(Voxel* voxel, float x_offset, float y_offset, float scale);
 
 #endif
