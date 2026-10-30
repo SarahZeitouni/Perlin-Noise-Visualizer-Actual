@@ -65,30 +65,6 @@ int main(void) {
 		}
 	}
 
-	//penis
-//	Chunk_insert(&chunk, (Vector3){12, 1, 5});
-//	Chunk_insert(&chunk, (Vector3){12, 1, 4});
-//	Chunk_insert(&chunk, (Vector3){12, 1, 3});
-//	Chunk_insert(&chunk, (Vector3){12, 2, 4});
-//	Chunk_insert(&chunk, (Vector3){12, 3, 4});
-//	Chunk_insert(&chunk, (Vector3){12, 4, 4});
-
-	// amongus
-//	Chunk_insert(&chunk, (Vector3){7, 1, 8});
-//	Chunk_insert(&chunk, (Vector3){9, 1, 8});
-//	Chunk_insert(&chunk, (Vector3){7, 2, 8});
-//	Chunk_insert(&chunk, (Vector3){8, 2, 8});
-//	Chunk_insert(&chunk, (Vector3){9, 2, 8});
-//	Chunk_insert(&chunk, (Vector3){7, 3, 8});
-//	Chunk_insert(&chunk, (Vector3){8, 3, 8});
-//	Chunk_insert(&chunk, (Vector3){9, 3, 8});
-//	Chunk_insert(&chunk, (Vector3){10, 3, 8});
-//	Chunk_insert(&chunk, (Vector3){9, 4, 8});
-//	Chunk_insert(&chunk, (Vector3){10, 4, 8});
-//	Chunk_insert(&chunk, (Vector3){7, 5, 8});
-//	Chunk_insert(&chunk, (Vector3){8, 5, 8});
-//	Chunk_insert(&chunk, (Vector3){9, 5, 8});
-
 	// blocks
 	Chunk_insert(&chunk, (Vector3){-2, 0, -2});
 	Chunk_insert(&chunk, (Vector3){-2, 0, -4});
