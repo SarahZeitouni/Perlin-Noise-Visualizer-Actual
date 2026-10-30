@@ -1,2 +1,4 @@
 *.md
-resources
+.resources
+.CMakeLists.txt
+.clangd
