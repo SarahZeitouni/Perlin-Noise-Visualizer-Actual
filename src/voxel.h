@@ -7,12 +7,12 @@
 Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scale);
 
 // spans from origin = (a, b, c) to (a+1, b+1, c+1)
-// z+ (up)  7-----6  _. y+ (back)
+// +y (up)  4-----5  _. -z (back)
 //     .   /|    /|  /|
-//    /|\ 4-+---5 | /
-//     |  | 3---|-2
+//    /|\ 7-+---6 | /
+//     |  | 0---|-1
 //     |  |/    |/
-//     |  0-----1  ---> x+ (right)
+//     |  3-----2  ---> +x (right)
 typedef struct Voxel {
 	Vector3 origin;
 	Vector3 disp_v[8];
@@ -34,5 +34,9 @@ Vector3 Voxel_getOrigin(Vector3 pos);
 void Voxel_draw(Voxel* voxel, float x_offset, float y_offset, float scale);
 
 void Voxel_forceDraw(Voxel* voxel, float x_offset, float y_offset, float scale);
+
+float Voxel_getPDS(Vector3* points, int size, const Vector3 pos);
+
+int Voxel_getNearestXZFace(Voxel* voxel, const Vector3 pos);
 
 #endif

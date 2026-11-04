@@ -2,7 +2,7 @@ COMPILER = cc
 COMPILER_FLAGS = -Wall -Wextra
 LIB_OPS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 OUT = ./build/main.o
-SRCFILES = src/main.c src/voxel.c src/voxel.h src/arrchunk.c src/arrchunk.h src/mergesort.h
+SRCFILES = src/*
 
 .PHONY: build
 .PHONY: run
