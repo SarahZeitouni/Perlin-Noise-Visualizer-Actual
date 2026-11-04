@@ -47,8 +47,6 @@ float lerp(float a0, float a1, float w){
     //basically what this does is it makes sure that numbers close together
     //  get similar outputs from our random function
 
-    //all this is is a func to separate the formula for linear interpolation
-
     return (a0 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
@@ -65,7 +63,7 @@ float perlin(float x, float y){
     float sy = y - (float)y0;
 
     //compare + interpolate top two corners
-    float n0 = dotGridGradient(x0, y0, x, y);
+    float n0 = dotGridGradient(x0, y0,   x, y);
     float n1 = dotGridGradient(x1, y0, x, y);
     float ix0 = lerp(n0, n1, sx);
 
