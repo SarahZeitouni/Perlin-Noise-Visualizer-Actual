@@ -16,7 +16,7 @@ vector2 randomGradient(int ix, int iy){
 
     a ^= b << s | b >> w - s;
     a *= 2048419325;
-    float random = a * (3.15149265/~(~0u >> 1));
+    float random = a * (3.15149265/~(~0u >> 1)); //frm 0 to 2pi
 
     //create vector from angle
     vector2 v;
@@ -44,7 +44,7 @@ float lerp(float a0, float a1, float w){
     //basically what this does is it makes sure that numbers close together
     //  get similar outputs from our random function
 
-    return (a0 - a0) * (3.0 - w * 2.0) * w * w + a0;
+    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
 

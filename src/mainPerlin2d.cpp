@@ -11,7 +11,7 @@ static const int windowWidth = 900;
 
 typedef struct Sample {
     int name;
-    unsigned char *pixels;
+    uint8_t *pixels;
 } sample;
 
 static void show_sample(sample *smp)
@@ -22,7 +22,7 @@ static void show_sample(sample *smp)
         .width = windowWidth,
         .height = windowHeight,
         .mipmaps = 1,
-		.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
+		.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
     };
 
 	Texture2D windowTexture = LoadTextureFromImage(windowImg);
@@ -55,14 +55,16 @@ int main() {
 			float freq = 1;
 			float amp = 1;
 
+			//layering noise on top of each other 12 times
 			for (int i = 0; i < 12; i++){
-				val += perlin(x * freq/GRID_SIZE, y * freq*GRID_SIZE) * amp;
+				val += perlin(x * (float)freq/GRID_SIZE, y * (float)freq/GRID_SIZE) * amp;
 
 				freq *=2;
 				amp /=2;
 			}
 			val *= 1.2;
 
+			//clip from -1 to 1
 			if (val > 1.0f)
 				val = 1.0f;
 			else if (val < -1.0f)
@@ -83,6 +85,6 @@ int main() {
 
     show_sample(&smp);
 
-
+	delete[] pixels;
 	return 0;
 }
