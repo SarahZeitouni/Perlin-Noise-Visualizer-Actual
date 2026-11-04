@@ -1,8 +1,5 @@
 #include <cmath>
-
-typedef struct{
-    float x, y;
-} vector2;
+#include "perlinNoiseGen.h"
 
 vector2 randomGradient(int ix, int iy){
     //this is a bit confusing to me, I would like to do my own research into 
