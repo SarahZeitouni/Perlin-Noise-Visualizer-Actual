@@ -36,6 +36,9 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
+	ChunkKDT chunkTree;
+	ChunkKDT_init(&chunkTree);
+
 	ArrChunk chunk;
 	ArrChunk_init(&chunk, (Vector3){0, 0, 0});
 
@@ -56,6 +59,8 @@ int main(void) {
 
 	ArrChunk_emplace(&chunk, (Vector3){10, 9, 0});
 	ArrChunk_emplace(&chunk, (Vector3){13, 9, 1});
+	ArrChunk_emplace(&chunk, (Vector3){0, 9, 10});
+	ArrChunk_emplace(&chunk, (Vector3){1, 9, 13});
 
 	ArrChunk_setVis(&chunk);
 	ArrChunk_translateVis(&chunk, player_view_pos, -1);

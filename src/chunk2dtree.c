@@ -38,15 +38,15 @@ ChunkKDT* ChunkKDT_init(ChunkKDT* tree) {
 	return tree;
 }
 
-static void ChunkKDT_deleteHelper(KDTNode* node)
+static void ChunkKDT_deleteHelper(KDTNode* node) {
 	if (!node) return;
 
 	ChunkKDT_deleteHelper(node->children[0]);
 	ChunkKDT_deleteHelper(node->children[1]);
 	free(node);
-
+}
 void ChunkKDT_delete(ChunkKDT* tree) {
-	ChunkKDT_deletHelper(tree->root);
+	ChunkKDT_deleteHelper(tree->root);
 	tree->root = nullptr;
 }
 
@@ -60,7 +60,7 @@ KDTNode* ChunkKDT_insert(ChunkKDT* tree, ArrChunk* chunk) {
 
 	float xz[2] = { chunk->origin.x, chunk->origin.z };
 	for (KDTNode* curr = tree->root; curr->chunk->origin.x != xz[0] || curr->chunk->origin.z != xz[1];) {
-		int b = xz[curr->axis] >= (Vector3[]){ curr->chunk->origin.x, curr->chunk->origin.z }[curr->axis];
+		int b = xz[curr->axis] >= (float[]){ curr->chunk->origin.x, curr->chunk->origin.z }[curr->axis];
 		if (!curr->children[b]) {
 			curr->children[b] = (KDTNode*)calloc(1, sizeof(KDTNode));
 			tree->count ++;
@@ -75,6 +75,7 @@ KDTNode* ChunkKDT_insertNew(ChunkKDT* tree, const Vector3 origin) {
 	if (!tree) return nullptr;
 
 	ArrChunk* chunk = (ArrChunk*)calloc(1, sizeof(ArrChunk));
+	ArrChunk_init(chunk, origin);
 	KDTNode* node = ChunkKDT_insert(tree, chunk);
 	if (!node)
 		free(chunk);
@@ -96,17 +97,48 @@ KDTNode* ChunkKDT_search(ChunkKDT* tree, const Vector3 origin) {
 
 KDTNode* ChunkKDT_find(ChunkKDT* tree, const Vector3 pos) {
 	if (!tree) return nullptr;
-	return ChunkKDT_search(tree, ChunkArr_getOrigin(pos));
+	return ChunkKDT_search(tree, ArrChunk_getOrigin(pos));
+}
+
+static void ChunkKDT_voidChunkHelper(KDTNode* node, void (*func)(ArrChunk*)) {
+	if (!node) return;
+
+	func(node->chunk);
+	ChunkKDT_voidChunkHelper(node->children[0], func);
+	ChunkKDT_voidChunkHelper(node->children[1], func);
+}
+void ChunkKDT_setVis(ChunkKDT* tree) {
+	if (!tree) return;
+	ChunkKDT_voidChunkHelper(tree->root, ArrChunk_setVis);
+}
+void ChunkKDT_resetVis(ChunkKDT* tree) {
+	if (!tree) return;
+	ChunkKDT_voidChunkHelper(tree->root, ArrChunk_resetVis);
+}
+
+static void ChunkKDT_voidChunkV3FHelper(KDTNode* node, const Vector3 axis, const float speed, void (*func)(ArrChunk*, const Vector3, const float)) {
+	if (!node) return;
+
+	func(node->chunk, axis, speed);
+	ChunkKDT_voidChunkV3FHelper(node->children[0], axis, speed, func);
+	ChunkKDT_voidChunkV3FHelper(node->children[1], axis, speed, func);
+}
+void ChunkKDT_rotateVis(ChunkKDT* tree, const Vector3 axis, const float rotation_speed) {
+	if (!tree) return;
+	ChunkKDT_voidChunkV3FHelper(tree->root, axis, rotation_speed, ArrChunk_rotateVis);
+}
+void ChunkKDT_translateVis(ChunkKDT* tree, const Vector3 axis, const float move_speed) {
+	if (!tree) return;
+	ChunkKDT_voidChunkV3FHelper(tree->root, axis, move_speed, ArrChunk_translateVis);
 }
 
 static void ChunkKDT_drawVisHelper(KDTNode* node, float x_offset, float y_offset, float scale) {
 	if (!node) return;
 
-	ArrChunk_drawVis(node->chunk, x_offset, y_offest, scale);
+	ArrChunk_drawVis(node->chunk, x_offset, y_offset, scale);
 	ChunkKDT_drawVisHelper(node->children[0], x_offset, y_offset, scale);
 	ChunkKDT_drawVisHelper(node->children[1], x_offset, y_offset, scale);
 }
-
 void ChunkKDT_drawVis(ChunkKDT* tree, float x_offset, float y_offset, float scale) {
 	if (!tree) return;
 	ChunkKDT_drawVisHelper(tree->root, x_offset, y_offset, scale);
