@@ -14,6 +14,8 @@ Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scal
 //     |  |/    |/
 //     |  3-----2  ---> +x (right)
 typedef struct Voxel {
+	int alive;
+	int visible;
 	Vector3 origin;
 	Vector3 disp_v[8];
 	struct Voxel* adj[6];
@@ -35,7 +37,7 @@ void Voxel_draw(Voxel* voxel, float x_offset, float y_offset, float scale);
 
 void Voxel_forceDraw(Voxel* voxel, float x_offset, float y_offset, float scale);
 
-float Voxel_getPDS(Vector3* points, int size, const Vector3 pos);
+//float Voxel_getPDS(Vector3* points, int size, const Vector3 pos);
 
 int Voxel_getNearestXZFace(Voxel* voxel, const Vector3 pos);
 

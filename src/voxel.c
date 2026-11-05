@@ -18,7 +18,7 @@
 //     |  |/    |/
 //     |  3-----2  ---> +x (right)
 
-static int edges[12][4] = { // left, right, face, next_face
+static const int edges[12][4] = { // left, right, face, next_face
 		// around x
 		{0, 1, 0, 4},
 		{3, 2, 4, 2},
@@ -43,7 +43,9 @@ Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scal
 Voxel* Voxel_init(Voxel* voxel, const Vector3 origin) {
 	if (!voxel) return nullptr;
 
-	voxel->origin = origin;
+	voxel->alive 	= 1;
+	voxel->visible	= 0;
+	voxel->origin 	= origin;
 
 	float x = origin.x;
 	float y = origin.y;
@@ -101,15 +103,17 @@ bool Voxel_isVisible(Voxel* voxel) {
 	if (!voxel) return false;
 
 	for (int i = 0; i < 6; i ++)
-		if (!voxel->adj[i]) return true;
+		if (!voxel->adj[i])
+			return true;
+
 	return false;
 }
 
 Vector3 Voxel_getOrigin(Vector3 pos) {
 	return (Vector3){
-		pos.x < (int)pos.x ? (int)(pos.x - 1) : (int)pos.x,
-		pos.y < (int)pos.y ? (int)(pos.y - 1) : (int)pos.y,
-		pos.z < (int)pos.z ? (int)(pos.z - 1) : (int)pos.z
+		pos.x < (int)pos.x ? (int)pos.x - 1 : (int)pos.x,
+		pos.y < (int)pos.y ? (int)pos.y - 1 : (int)pos.y,
+		pos.z < (int)pos.z ? (int)pos.z - 1 : (int)pos.z
 	};
 }
 
@@ -174,13 +178,12 @@ void Voxel_forceDraw(Voxel* voxel, float x_offset, float y_offset, float scale) 
 // 4 down
 // 5 up
 
-float Voxel_getPDS(Vector3* points, int size, const Vector3 pos) {
+static float Voxel_getPDS(Vector3* points, int size, const Vector3 pos) {
 	float sum = 0;
 	for (int i = 0; i < size; i ++)
 		sum += Vector3Distance(points[i], pos);
 	return sum;
 }
-
 int Voxel_getNearestXZFace(Voxel* voxel, const Vector3 pos) {
 	float x = voxel->origin.x;
 	float y = voxel->origin.y;
@@ -195,7 +198,7 @@ int Voxel_getNearestXZFace(Voxel* voxel, const Vector3 pos) {
 		(Vector3){x+1, 	y+1, 	z+1},
 		(Vector3){x,	y+1, 	z+1}
 	};
-	float dist[6] = {
+	float dist[4] = {
 		Voxel_getPDS((Vector3[]){v[0], v[1], v[5], v[4]}, 4, pos),
 		Voxel_getPDS((Vector3[]){v[1], v[2], v[5], v[6]}, 4, pos),
 		Voxel_getPDS((Vector3[]){v[2], v[3], v[6], v[7]}, 4, pos),

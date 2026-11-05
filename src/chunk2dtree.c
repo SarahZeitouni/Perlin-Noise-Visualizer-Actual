@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "raymath.h"
 #include "stdlib.h"
+#include "stdio.h"
 
 //typedef struct KDTNode {
 //	ArrChunk* chunk;
@@ -85,7 +86,9 @@ KDTNode* ChunkKDT_insertNew(ChunkKDT* tree, const Vector3 origin) {
 KDTNode* ChunkKDT_search(ChunkKDT* tree, const Vector3 origin) {
 	if (!tree) return nullptr;
 
-	float xz[2] = { origin.x, origin.z };
+	Vector3 o = ArrChunk_getOrigin(origin);
+
+	float xz[2] = { o.x, o.z };
 	for (KDTNode* curr = tree->root; curr;) {
 		float xz_c[2] = { curr->chunk->origin.x, curr->chunk->origin.z };
 		if (xz[0] == xz_c[0] && xz[1] == xz_c[1])
@@ -97,7 +100,7 @@ KDTNode* ChunkKDT_search(ChunkKDT* tree, const Vector3 origin) {
 
 KDTNode* ChunkKDT_find(ChunkKDT* tree, const Vector3 pos) {
 	if (!tree) return nullptr;
-	return ChunkKDT_search(tree, ArrChunk_getOrigin(pos));
+	return ChunkKDT_search(tree, pos);
 }
 
 static void ChunkKDT_voidChunkHelper(KDTNode* node, void (*func)(ArrChunk*)) {

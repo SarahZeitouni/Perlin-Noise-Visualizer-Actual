@@ -25,51 +25,47 @@ void ArrChunk_delete(ArrChunk* chunk) {
 	chunk->visible	= nullptr;
 }
 
-bool ArrChunk_inRange(ArrChunk* chunk, const Vector3 pos) {
-	if (!chunk) return false;
-
-	return
-	(	pos.x - chunk->origin.x >= 0 && pos.x - chunk->origin.x < 16
-	&&	pos.y - chunk->origin.y >= 0 && pos.y - chunk->origin.y < 128
-	&&	pos.z - chunk->origin.z >= 0 && pos.z - chunk->origin.z < 16);
-}
+//bool ArrChunk_inRange(ArrChunk* chunk, const Vector3 pos) {
+//	if (!chunk) return false;
+//
+//	return
+//	(	pos.x - chunk->origin.x >= 0 && pos.x - chunk->origin.x < 16
+//	&&	pos.y - chunk->origin.y >= 0 && pos.y - chunk->origin.y < 128
+//	&&	pos.z - chunk->origin.z >= 0 && pos.z - chunk->origin.z < 16);
+//}
 
 Voxel* ArrChunk_get(ArrChunk* chunk, int x, int y, int z) {
 	if (!chunk) return nullptr;
 
-	if (x < 0 || x >= 16 || y < 0 || y >= 128 || z < 0 || z >= 16) {
+	if (x < 0 || x >= 16 || y < 0 || y >= 128 || z < 0 || z >= 16)
 		return nullptr;
-	}
 
 	Voxel* v = &chunk->voxels[x + 16*y + 2048*z];
-	if (v->disp_v[0].x == v->disp_v[1].x)
-		return nullptr;
-	return v;
-//	for (unsigned i = 0; i < sizeof(Voxel)/sizeof(char); i ++) {
-//		if (*(char*)(v + i) != 0)
-//			return v;
-//	}
-//	return nullptr;
+	return v->alive ? v : nullptr;
 }
 
 Voxel* ArrChunk_find(ArrChunk* chunk, const Vector3 pos) {
-	Vector3 o = Voxel_getOrigin(pos);
-	return ArrChunk_get(chunk, (int)(o.x - chunk->origin.x), (int)(o.y - chunk->origin.y), (int)(o.z - chunk->origin.z));
+	if (!chunk) return nullptr;
+	Vector3 o = Vector3Subtract(Voxel_getOrigin(pos), chunk->origin);
+	return ArrChunk_get(chunk, (int)o.x, (int)o.y, (int)o.z);
 }
 
-Voxel* ArrChunk_emplace(ArrChunk* chunk, const Vector3 pos) {
-	if (!chunk || !ArrChunk_inRange(chunk, pos))
+Voxel* ArrChunk_emplaceLocal(ArrChunk* chunk, const Vector3 pos) {
+	if (!chunk)
 		return nullptr;
 
 	Vector3 o = Voxel_getOrigin(pos);
+	if (o.x < 0 || o.x >= 16 || o.y < 0 || o.y >= 128 || o.z < 0 || o.z >= 16)
+		return nullptr;
+
 	Voxel* v = chunk->voxels + (int)o.x + 16*(int)o.y + 2048*(int)o.z;
-	Voxel_init(v, pos);
-	v->adj[0] = ArrChunk_find(chunk, (Vector3){o.x,	 	o.y, 	o.z-1});
-	v->adj[1] = ArrChunk_find(chunk, (Vector3){o.x+1, 	o.y, 	o.z});
-	v->adj[2] = ArrChunk_find(chunk, (Vector3){o.x,		o.y,	o.z+1});
-	v->adj[3] = ArrChunk_find(chunk, (Vector3){o.x-1,	o.y,	o.z});
-	v->adj[4] = ArrChunk_find(chunk, (Vector3){o.x,		o.y-1,	o.z});
-	v->adj[5] = ArrChunk_find(chunk, (Vector3){o.x,		o.y+1,	o.z});
+	Voxel_init(v, Vector3Add(pos, chunk->origin));
+	v->adj[0] = ArrChunk_get(chunk, (int)o.x, 	(int)o.y, 	(int)o.z-1);
+	v->adj[1] = ArrChunk_get(chunk, (int)o.x+1, (int)o.y, 	(int)o.z);
+	v->adj[2] = ArrChunk_get(chunk, (int)o.x, 	(int)o.y,	(int)o.z+1);
+	v->adj[3] = ArrChunk_get(chunk, (int)o.x-1, (int)o.y, 	(int)o.z);
+	v->adj[4] = ArrChunk_get(chunk, (int)o.x, 	(int)o.y-1, (int)o.z);
+	v->adj[5] = ArrChunk_get(chunk, (int)o.x, 	(int)o.y+1,	(int)o.z);
 
 	if (v->adj[0])
 		v->adj[0]->adj[2] = v;
@@ -86,34 +82,44 @@ Voxel* ArrChunk_emplace(ArrChunk* chunk, const Vector3 pos) {
 	return v;
 }
 
-Voxel* ArrChunk_remove(ArrChunk* chunk, const Vector3 pos) {
+Voxel* ArrChunk_emplaceFind(ArrChunk* chunk, const Vector3 pos) {
+	if (!chunk) return nullptr;
+	return ArrChunk_emplaceLocal(chunk, Vector3Subtract(pos, chunk->origin));
+}
+
+Voxel* ArrChunk_removeVoxel(ArrChunk* chunk, Voxel* v) {
+	if (!chunk || !v || !v->alive) return nullptr;
+
+	v->alive 	= 0;
+	v->visible 	= 0;
+	int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
+	for (int i = 0; i < 6; i ++) {
+		if (v->adj[p[i][0]]) {
+			v->adj[p[i][0]]->adj[p[i][1]] = nullptr;
+			if (v->adj[p[i][0]]->alive && !v->adj[p[i][0]]->visible)
+				ArrChunk_insertVis(chunk, v->adj[p[i][0]]);
+		}
+	}
+	return v;
+}
+
+Voxel* ArrChunk_removeLocal(ArrChunk* chunk, const Vector3 pos) {
 	if (!chunk) return nullptr;
 
-	Voxel* v = ArrChunk_find(chunk, pos);
-	if (!v)
+	Vector3 o = Voxel_getOrigin(pos);
+	if (o.x < 0 || o.x >= 16 || o.y < 0 || o.y >= 128 || o.z < 0 || o.z >= 16)
 		return nullptr;
 
-	if (v->adj[0])
-		v->adj[0]->adj[2] = nullptr;
-	if (v->adj[1])
-		v->adj[1]->adj[3] = nullptr;
-	if (v->adj[2])
-		v->adj[2]->adj[0] = nullptr;
-	if (v->adj[3])
-		v->adj[3]->adj[1] = nullptr;
-	if (v->adj[4])
-		v->adj[4]->adj[5] = nullptr;
-	if (v->adj[5])
-		v->adj[5]->adj[4] = nullptr;
-	for (unsigned i = 0; i < sizeof(Voxel)/sizeof(char); i ++) {
-		if (*(char*)(v + i) != 0)
-			return v;
-	}
-	return nullptr;
+	return ArrChunk_removeVoxel(chunk, ArrChunk_get(chunk, (int)o.x, (int)o.y, (int)o.z));
+}
+
+Voxel* ArrChunk_removeFind(ArrChunk* chunk, const Vector3 pos) {
+	if (!chunk) return nullptr;
+	return ArrChunk_removeLocal(chunk, Vector3Subtract(pos, chunk->origin));
 }
 
 Voxel* ArrChunk_insertVis(ArrChunk* chunk, Voxel* voxel) {
-	if (!chunk || !voxel) return nullptr;
+	if (!chunk || !voxel || !Voxel_isVisible(voxel)) return nullptr;
 
 	while (chunk->vis_size + 1 >= chunk->vis_cap) {
 		Voxel** temp = (Voxel**)realloc(chunk->visible, sizeof(Voxel*) * chunk->vis_cap * 2);
@@ -125,6 +131,7 @@ Voxel* ArrChunk_insertVis(ArrChunk* chunk, Voxel* voxel) {
 	}
 	chunk->visible[chunk->vis_size] = voxel;
 	chunk->vis_size ++;
+	voxel->visible = 1;
 	return voxel;
 }
 
@@ -153,7 +160,7 @@ void ArrChunk_rotateVis(ArrChunk* chunk, const Vector3 axis, const float rotatio
 
 	for (int i = 0; i < chunk->vis_size; i ++) {
 		Voxel* v = chunk->visible[i];
-		if (!v)
+		if (!v || !v->alive)
 			continue;
 
 		for (int j = 0; j < 8; j ++) {
@@ -167,7 +174,7 @@ void ArrChunk_translateVis(ArrChunk* chunk, const Vector3 axis, const float move
 
 	for (int i = 0; i < chunk->vis_size; i ++) {
 		Voxel* v = chunk->visible[i];
-		if (!v)
+		if (!v || !v->alive)
 			continue;
 
 		for (int j = 0; j < 8; j ++) {
@@ -181,7 +188,7 @@ void ArrChunk_resetVis(ArrChunk* chunk) {
 
 	for (int i = 0; i < chunk->vis_size; i ++) {
 		Voxel* v = chunk->visible[i];
-		if (!v)
+		if (!v || !v->alive)
 			continue;
 
 		Voxel_resetDisplay(v);
@@ -193,7 +200,7 @@ void ArrChunk_drawVis(ArrChunk* chunk, float x_offset, float y_offset, float sca
 
 	for (int i = 0; i < chunk->vis_size; i ++) {
 		Voxel* v = chunk->visible[i];
-		if (!v)
+		if (!v || !v->alive)
 			continue;
 
 		Voxel_draw(v, x_offset, y_offset, scale);
@@ -203,8 +210,11 @@ void ArrChunk_drawVis(ArrChunk* chunk, float x_offset, float y_offset, float sca
 Vector3 ArrChunk_getOrigin(const Vector3 pos) {
 	Vector3 o = Voxel_getOrigin(pos);
     return (Vector3){
-		(int)o.x < (int)o.x/16 ? ((int)o.x/16)*16 - 16 : ((int)o.x/16)*16,
-		(int)o.y < (int)o.x/128 ? ((int)o.x/128)*128 - 128 : ((int)o.x/128)*128,
-		(int)o.z < (int)o.z/16 ? ((int)o.z/16)*16 - 16 : ((int)o.z/16)*16
+		(int)o.x < 0 && (int)o.x % 16 	!= 0 ? ((int)o.x/16)*16 - 16 	: ((int)o.x/16)*16,
+		(int)o.y < 0 && (int)o.y % 128 	!= 0 ? ((int)o.y/128)*128 - 128 	: ((int)o.y/128)*128,
+		(int)o.z < 0 && (int)o.z % 16 	!= 0 ? ((int)o.z/16)*16 - 16 	: ((int)o.z/16)*16
+//		(int)o.x < (int)o.x/16 	? ((int)o.x/16)*16 - 16 : ((int)o.x/16)*16,
+//		(int)o.y < (int)o.x/128 ? ((int)o.x/128)*128 - 128 : ((int)o.x/128)*128,
+//		(int)o.z < (int)o.z/16 	? ((int)o.z/16)*16 - 16 : ((int)o.z/16)*16
     };
 }

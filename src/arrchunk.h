@@ -17,15 +17,21 @@ ArrChunk* ArrChunk_init(ArrChunk* chunk, const Vector3 origin);
 
 void ArrChunk_delete(ArrChunk* chunk);
 
-bool ArrChunk_inRange(ArrChunk* chunk, const Vector3 origin);
+//bool ArrChunk_inRange(ArrChunk* chunk, const Vector3 origin);
 
 Voxel* ArrChunk_find(ArrChunk* chunk, const Vector3 pos);
 
 Voxel* ArrChunk_get(ArrChunk* chunk, int x, int y, int z);
 
-Voxel* ArrChunk_emplace(ArrChunk* chunk, const Vector3 pos);
+Voxel* ArrChunk_emplaceLocal(ArrChunk* chunk, const Vector3 pos);
 
-Voxel* ArrChunk_remove(ArrChunk* chunk, const Vector3 pos);
+Voxel* ArrChunk_emplaceFind(ArrChunk* chunk, const Vector3 pos);
+
+Voxel* ArrChunk_removeVoxel(ArrChunk* chunk, Voxel* voxel);
+
+Voxel* ArrChunk_removeLocal(ArrChunk* chunk, const Vector3 pos);
+
+Voxel* ArrChunk_removeFind(ArrChunk* chunk, const Vector3 pos);
 
 Voxel* ArrChunk_insertVis(ArrChunk* chunk, Voxel* voxel);
 
