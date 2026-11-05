@@ -1,5 +1,6 @@
 #include "voxel.h"
 #include "arrchunk.h"
+#include "chunk2dtree.h"
 #include <raylib.h>
 #include <raymath.h>
 #include <stdio.h>

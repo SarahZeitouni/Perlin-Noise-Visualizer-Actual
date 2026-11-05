@@ -39,4 +39,6 @@ void ArrChunk_resetVis(ArrChunk* chunk);
 
 void ArrChunk_drawVis(ArrChunk* chunk, float x_offset, float y_offset, float scale);
 
+Vector3 ArrChunk_getOrigin(const Vector3 pos);
+
 #endif

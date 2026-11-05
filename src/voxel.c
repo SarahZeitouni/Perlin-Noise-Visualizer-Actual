@@ -107,9 +107,9 @@ bool Voxel_isVisible(Voxel* voxel) {
 
 Vector3 Voxel_getOrigin(Vector3 pos) {
 	return (Vector3){
-		pos.x < 0 ? (int)(pos.x - 1) : (int)pos.x,
-		pos.y < 0 ? (int)(pos.y - 1) : (int)pos.y,
-		pos.z < 0 ? (int)(pos.z - 1) : (int)pos.z
+		pos.x < (int)pos.x ? (int)(pos.x - 1) : (int)pos.x,
+		pos.y < (int)pos.y ? (int)(pos.y - 1) : (int)pos.y,
+		pos.z < (int)pos.z ? (int)(pos.z - 1) : (int)pos.z
 	};
 }
 

@@ -199,3 +199,12 @@ void ArrChunk_drawVis(ArrChunk* chunk, float x_offset, float y_offset, float sca
 		Voxel_draw(v, x_offset, y_offset, scale);
 	}
 }
+
+Vector3 ArrChunk_getOrigin(const Vector3 pos) {
+	Vector3 o = Voxel_getOrigin(pos);
+    return (Vector3){
+		(int)o.x < (int)o.x/16 ? ((int)o.x/16)*16 - 16 : ((int)o.x/16)*16,
+		(int)o.y < (int)o.x/128 ? ((int)o.x/128)*128 - 128 : ((int)o.x/128)*128,
+		(int)o.z < (int)o.z/16 ? ((int)o.z/16)*16 - 16 : ((int)o.z/16)*16
+    };
+}
