@@ -119,16 +119,19 @@ Voxel* ArrChunk_removeFind(ArrChunk* chunk, const Vector3 pos) {
 }
 
 Voxel* ArrChunk_insertVis(ArrChunk* chunk, Voxel* voxel) {
-	if (!chunk || !voxel || !Voxel_isVisible(voxel)) return nullptr;
+	if (!chunk || !voxel || !Voxel_isVisible(voxel) || voxel->visible) return nullptr;
 
-	while (chunk->vis_size + 1 >= chunk->vis_cap) {
+	while (chunk->vis_size >= chunk->vis_cap) {
 		Voxel** temp = (Voxel**)realloc(chunk->visible, sizeof(Voxel*) * chunk->vis_cap * 2);
-		if (!temp)
+		if (!temp) {
+			printf("Bleh\n");
 			return nullptr;
+		}
 
 		chunk->visible = temp;
 		chunk->vis_cap *= 2;
 	}
+	printf("add\n");
 	chunk->visible[chunk->vis_size] = voxel;
 	chunk->vis_size ++;
 	voxel->visible = 1;

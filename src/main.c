@@ -5,32 +5,27 @@
 #include <raymath.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "perlinNoiseGen.h"
+#include <stdint.h>
 
-static void ChunkKDT_printAllHelper(KDTNode* node) {
-	if (!node) return;
-
-	printf("(%f, %f, %f)\n", node->chunk->origin.x, node->chunk->origin.y, node->chunk->origin.z);
-	ChunkKDT_printAllHelper(node->children[0]);
-	ChunkKDT_printAllHelper(node->children[1]);
-}
-static void ChunkKDT_printAll(ChunkKDT* tree) {
-	if (!tree) return;
-	ChunkKDT_printAllHelper(tree->root);
-}
-
-static void ArrChunk_block(ArrChunk* chunk, Vector3 p0, Vector3 p1) {
-	if (!chunk) return;
-
-	p0 = Voxel_getOrigin(p0);
-	p1 = Voxel_getOrigin(p1);
-
-	for (int x = p0.x; x <= p1.x; x ++) {
-		for (int y = p0.y; y <= p1.y; y ++) {
-			for (int z = p0.z; z <= p1.z; z ++) {
-				ArrChunk_emplaceLocal(chunk, (Vector3){x, y, z});
+static void ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_size, float scale) {
+	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
+	for (int i = 0; i < x_size; i ++) {
+		for (int j = 0; j < z_size; j ++) {
+			KDTNode* node = ChunkKDT_insertNew(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
+			ArrChunk* chunk = node ? node->chunk : nullptr;
+			if (!chunk)
+				continue;
+			for (int x = 0; x < 16; x++) {
+				for (int z = 0; z < 16; z ++) {
+					int index = (i*16*64 + j*16 + x*64 + z)*4;
+					for (int y = 0; y < pixels[index]*scale; y ++)
+						ArrChunk_emplaceLocal(chunk, (Vector3){x, y, z});
+				}
 			}
 		}
 	}
+	free(pixels);
 }
 
 int main(void) {
@@ -51,7 +46,7 @@ int main(void) {
 	const float y_offset = (float)screenHeight / 2;
 	const float scale = (float)screenHeight * 0.4f;
 
-	Vector3 player_origin = { 4.0f, 11.0f, 4.0f };
+	Vector3 player_origin = { 15.0f, 63.0f, 15.0f };
 	Vector3 player_pos = player_origin;
 	Vector3 player_view_pos = Vector3Add(player_pos, (Vector3){0, 1.6f, 0});
 	Vector3 player_velocity = { 0.0f, 0.0f, 0.0f };
@@ -67,46 +62,45 @@ int main(void) {
 
 	ChunkKDT chunkTree;
 	ChunkKDT_init(&chunkTree);
+	ChunkKDT_Perlin(&chunkTree, -1, -1, 4, 4, 0.25);
 
-	for (int cx = -1; cx < 2; cx ++) {
-		for (int cz = -1; cz < 2; cz ++) {
-			ArrChunk* chunk = ChunkKDT_insertNew(&chunkTree, (Vector3){ cx*16, 0, cz*16 })->chunk;
-
-			ArrChunk_block(chunk, (Vector3){0, 0, 0}, (Vector3){9, 9, 9});
-
-			for (int i = 0; i < 4; i ++) {
-				if (!ArrChunk_emplaceLocal(chunk, (Vector3){6, 10+4*i, 6}))
-					printf("oopsies\n");
-				ArrChunk_emplaceLocal(chunk, (Vector3){6, 11+4*i, 8});
-				ArrChunk_emplaceLocal(chunk, (Vector3){8, 12+4*i, 8});
-				ArrChunk_emplaceLocal(chunk, (Vector3){8, 13+4*i, 6});
-			}
-
-			ArrChunk_emplaceLocal(chunk, (Vector3){10, 9, 0});
-			ArrChunk_emplaceLocal(chunk, (Vector3){13, 9, 1});
-			ArrChunk_emplaceLocal(chunk, (Vector3){15, 9, 2});
-			ArrChunk_emplaceLocal(chunk, (Vector3){0, 9, 10});
-			ArrChunk_emplaceLocal(chunk, (Vector3){1, 9, 13});
-			ArrChunk_emplaceLocal(chunk, (Vector3){2, 9, 15});
-
-			for (int i = 0; i < 4; i ++) {
-				for (int j = 0; j < 4; j ++) {
-					for (int k = 0; k < 4; k ++)
-						ArrChunk_removeLocal(chunk, (Vector3){2+i, 9-k, 2+j});
-				}
-			}
-
-			ArrChunk_emplaceLocal(chunk, (Vector3){5, 6, 5});
-			ArrChunk_emplaceLocal(chunk, (Vector3){5, 7, 4});
-			ArrChunk_emplaceLocal(chunk, (Vector3){5, 8, 3});
-			ArrChunk_emplaceLocal(chunk, (Vector3){5, 9, 2});
-		}
-	}
+//	for (int cx = -1; cx < 2; cx ++) {
+//		for (int cz = -1; cz < 2; cz ++) {
+//			ArrChunk* chunk = ChunkKDT_insertNew(&chunkTree, (Vector3){ cx*16, 0, cz*16 })->chunk;
+//
+//			ArrChunk_block(chunk, (Vector3){0, 0, 0}, (Vector3){9, 9, 9});
+//
+//			for (int i = 0; i < 4; i ++) {
+//				if (!ArrChunk_emplaceLocal(chunk, (Vector3){6, 10+4*i, 6}))
+//					printf("oopsies\n");
+//				ArrChunk_emplaceLocal(chunk, (Vector3){6, 11+4*i, 8});
+//				ArrChunk_emplaceLocal(chunk, (Vector3){8, 12+4*i, 8});
+//				ArrChunk_emplaceLocal(chunk, (Vector3){8, 13+4*i, 6});
+//			}
+//
+//			ArrChunk_emplaceLocal(chunk, (Vector3){10, 9, 0});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){13, 9, 1});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){15, 9, 2});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){0, 9, 10});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){1, 9, 13});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){2, 9, 15});
+//
+//			for (int i = 0; i < 4; i ++) {
+//				for (int j = 0; j < 4; j ++) {
+//					for (int k = 0; k < 4; k ++)
+//						ArrChunk_removeLocal(chunk, (Vector3){2+i, 9-k, 2+j});
+//				}
+//			}
+//
+//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 6, 5});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 7, 4});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 8, 3});
+//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 9, 2});
+//		}
+//	}
 
 	ChunkKDT_setVis(&chunkTree);
 	ChunkKDT_translateVis(&chunkTree, player_view_pos, -1);
-
-	ChunkKDT_printAll(&chunkTree);
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
@@ -119,19 +113,21 @@ int main(void) {
 			printf("poop\n");
 		ArrChunk* chunk = node ? node->chunk : nullptr;
 
-		for (int i = -1; i < 2; i ++) {
-			for (int j = -1; j < 2; j ++) {
-				Vector3 o = Vector3Add(chunk->origin, (Vector3){16*i, 0, 16*j});
-				if (!ChunkKDT_search(&chunkTree, o)) {
-					ArrChunk* tmp = ChunkKDT_insertNew(&chunkTree, o)->chunk;
-					ArrChunk_block(tmp, (Vector3){0, 0, 0}, (Vector3){15, 9, 15});
-					ArrChunk_setVis(tmp);
-					ArrChunk_translateVis(tmp, player_view_pos, -1);
-					ArrChunk_rotateVis(tmp, x_axis, -1*pitch);
-					ArrChunk_rotateVis(tmp, y_axis_display, -1*yaw);
-				}
-			}
-		}
+		// load new chunks (got rid of block, fix)
+
+//		for (int i = -1; i < 2; i ++) {
+//			for (int j = -1; j < 2; j ++) {
+//				Vector3 o = Vector3Add(chunk->origin, (Vector3){16*i, 0, 16*j});
+//				if (!ChunkKDT_search(&chunkTree, o)) {
+//					ArrChunk* tmp = ChunkKDT_insertNew(&chunkTree, o)->chunk;
+//					ArrChunk_block(tmp, (Vector3){0, 0, 0}, (Vector3){15, 9, 15});
+//					ArrChunk_setVis(tmp);
+//					ArrChunk_translateVis(tmp, player_view_pos, -1);
+//					ArrChunk_rotateVis(tmp, x_axis, -1*pitch);
+//					ArrChunk_rotateVis(tmp, y_axis_display, -1*yaw);
+//				}
+//			}
+//		}
 
 		if (IsKeyDown(KEY_LEFT)) {
 			ChunkKDT_rotateVis(&chunkTree, y_axis_display, nrotation_speed);
