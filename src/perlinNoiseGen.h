@@ -1,14 +1,8 @@
-#pragma once
+#ifndef PERLINNOISEGEN_H
+#define PERLINNOISEGEN_H
 
+#include <stdint.h>
 
-typedef struct{
-    float x, y;
-} vector2;
+uint8_t* Perlin_generate(const int width, const int height, int seed);
 
-vector2 randomGradient(int ix, int iy);
-
-float dotGridGradient(int ix, int iy, float x, float y);
-
-float lerp(float a0, float a1, float w);
-
-float perlin(float x, float y);
+#endif

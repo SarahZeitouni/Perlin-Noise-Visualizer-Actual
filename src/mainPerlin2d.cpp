@@ -1,90 +1,61 @@
-#include <cstdint>
-#include <iostream>
-#include "raylib.h"
-#include "perlinNoiseGen.h"
+// #include <cstdint>
+// #include <iostream>
+// #include "raylib.h"
+// #include "perlinNoiseGen.h"
 
-using namespace std;
+// using namespace std;
 
 
-static const int windowHeight = 600;
-static const int windowWidth = 900;
+// static const int windowHeight = 600;
+// static const int windowWidth = 900;
 
-typedef struct Sample {
-    int name;
-    uint8_t *pixels;
-} sample;
+// typedef struct Sample {
+//     int name;
+//     uint8_t *pixels;
+// } sample;
 
-static void show_sample(sample *smp)
-{
-	InitWindow(windowWidth, windowHeight, "Perlin Noise Generator");
-    Image windowImg = {
-        .data = smp->pixels,
-        .width = windowWidth,
-        .height = windowHeight,
-        .mipmaps = 1,
-		.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-    };
+// static void show_sample(sample *smp)
+// {
+// 	InitWindow(windowWidth, windowHeight, "Perlin Noise Generator");
+//     Image windowImg = {
+//         .data = smp->pixels,
+//         .width = windowWidth,
+//         .height = windowHeight,
+//         .mipmaps = 1,
+// 		.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+//     };
 
-	Texture2D windowTexture = LoadTextureFromImage(windowImg);
-    SetTargetFPS(60);
+// 	Texture2D windowTexture = LoadTextureFromImage(windowImg);
+//     SetTargetFPS(60);
 
-    while (!WindowShouldClose()) {
-        BeginDrawing();
+//     while (!WindowShouldClose()) {
+//         BeginDrawing();
 
-			ClearBackground(BLACK);
+// 			ClearBackground(BLACK);
 
-			DrawTexture(windowTexture, 0, 0, WHITE);
+// 			DrawTexture(windowTexture, 0, 0, WHITE);
 		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-    }
+// 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
+// 		EndDrawing();
+//     }
 
-    CloseWindow();
-}
+//     CloseWindow();
+// }
 
-int main() {
+// int main() {
 
-	uint8_t* pixels = new uint8_t[windowHeight * windowWidth * 4];
+// 	uint8_t* pixels = new uint8_t[windowHeight * windowWidth * 4];
 
-	const int GRID_SIZE = 400;
+// 	const int GRID_SIZE = 400;
 
-	for (int x = 0; x < windowWidth; x++){
-		for (int y = 0; y < windowHeight; y++){
-			int index = (y * windowWidth + x) * 4;
-			float val = 0;
-			float freq = 1;
-			float amp = 1;
+// 	int seed = 383299;
 
-			//layering noise on top of each other 12 times
-			for (int i = 0; i < 12; i++){
-				val += perlin(x * (float)freq/GRID_SIZE, y * (float)freq/GRID_SIZE) * amp;
+// 	pixels = Perlin_generate(windowWidth, windowHeight, seed);
 
-				freq *=2;
-				amp /=2;
-			}
-			val *= 1.2;
+// 	sample smp = { .name = 5, .pixels = pixels };
 
-			//clip from -1 to 1
-			if (val > 1.0f)
-				val = 1.0f;
-			else if (val < -1.0f)
-				val = -1.0f;
+//     show_sample(&smp);
 
-			//convert (1 to -1) into (255 to 0)
-			int color = (int)(((val + 1.0f) * 0.5f) * 255);
-
-			//set pixels color
-			pixels[index] = color;
-			pixels[index + 1] = color;
-			pixels[index + 2] = color;
-			pixels[index + 3] = 255;
-		}
-	}
-
-	sample smp = { .name = 5, .pixels = pixels };
-
-    show_sample(&smp);
-
-	delete[] pixels;
-	return 0;
-}
+// 	delete[] pixels;
+// 	return 0;
+// }
