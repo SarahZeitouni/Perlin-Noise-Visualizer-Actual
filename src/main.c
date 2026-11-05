@@ -8,6 +8,10 @@
 #include "perlinNoiseGen.h"
 #include <stdint.h>
 
+#define PERLIN_WIDTH 	4
+#define PERLIN_HEIGHT 	4
+#define PERLIN_SCALE	0.25
+
 static void ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_size, float scale) {
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
 	for (int i = 0; i < x_size; i ++) {
@@ -63,7 +67,7 @@ int main(void) {
 	ChunkKDT chunkTree;
 	ChunkKDT_init(&chunkTree);
 
-	ChunkKDT_Perlin(&chunkTree, -1, -1, 4, 4, 0.33);
+	ChunkKDT_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
 
 	ChunkKDT_setVis(&chunkTree);
 	ChunkKDT_translateVis(&chunkTree, player_view_pos, -1);
@@ -243,7 +247,7 @@ int main(void) {
 				break;
 		}
 
-		if (selected && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		if (selected && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_F))) {
 			int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
 			for (int i = 0; i < 6; i ++) {
 	     		if (selected->adj[p[i][0]]) {
