@@ -110,9 +110,16 @@ static void ChunkKDT_voidChunkHelper(KDTNode* node, void (*func)(ArrChunk*)) {
 	ChunkKDT_voidChunkHelper(node->children[0], func);
 	ChunkKDT_voidChunkHelper(node->children[1], func);
 }
+static void ChunkKDT_setVisHelper(KDTNode* node) {
+	if (!node) return;
+
+	ArrChunk_setVis(node->chunk);
+	ChunkKDT_setVisHelper(node->children[0]);
+	ChunkKDT_setVisHelper(node->children[1]);
+}
 void ChunkKDT_setVis(ChunkKDT* tree) {
 	if (!tree) return;
-	ChunkKDT_voidChunkHelper(tree->root, ArrChunk_setVis);
+	ChunkKDT_setVisHelper(tree->root);
 }
 void ChunkKDT_resetVis(ChunkKDT* tree) {
 	if (!tree) return;

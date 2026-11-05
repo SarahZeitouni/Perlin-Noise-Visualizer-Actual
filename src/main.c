@@ -62,42 +62,8 @@ int main(void) {
 
 	ChunkKDT chunkTree;
 	ChunkKDT_init(&chunkTree);
-	ChunkKDT_Perlin(&chunkTree, -1, -1, 4, 4, 0.25);
 
-//	for (int cx = -1; cx < 2; cx ++) {
-//		for (int cz = -1; cz < 2; cz ++) {
-//			ArrChunk* chunk = ChunkKDT_insertNew(&chunkTree, (Vector3){ cx*16, 0, cz*16 })->chunk;
-//
-//			ArrChunk_block(chunk, (Vector3){0, 0, 0}, (Vector3){9, 9, 9});
-//
-//			for (int i = 0; i < 4; i ++) {
-//				if (!ArrChunk_emplaceLocal(chunk, (Vector3){6, 10+4*i, 6}))
-//					printf("oopsies\n");
-//				ArrChunk_emplaceLocal(chunk, (Vector3){6, 11+4*i, 8});
-//				ArrChunk_emplaceLocal(chunk, (Vector3){8, 12+4*i, 8});
-//				ArrChunk_emplaceLocal(chunk, (Vector3){8, 13+4*i, 6});
-//			}
-//
-//			ArrChunk_emplaceLocal(chunk, (Vector3){10, 9, 0});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){13, 9, 1});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){15, 9, 2});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){0, 9, 10});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){1, 9, 13});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){2, 9, 15});
-//
-//			for (int i = 0; i < 4; i ++) {
-//				for (int j = 0; j < 4; j ++) {
-//					for (int k = 0; k < 4; k ++)
-//						ArrChunk_removeLocal(chunk, (Vector3){2+i, 9-k, 2+j});
-//				}
-//			}
-//
-//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 6, 5});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 7, 4});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 8, 3});
-//			ArrChunk_emplaceLocal(chunk, (Vector3){5, 9, 2});
-//		}
-//	}
+	ChunkKDT_Perlin(&chunkTree, -1, -1, 4, 4, 0.33);
 
 	ChunkKDT_setVis(&chunkTree);
 	ChunkKDT_translateVis(&chunkTree, player_view_pos, -1);
@@ -277,8 +243,21 @@ int main(void) {
 				break;
 		}
 
-		if (selected && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		if (selected && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
+			for (int i = 0; i < 6; i ++) {
+	     		if (selected->adj[p[i][0]]) {
+	     			selected->adj[p[i][0]]->adj[p[i][1]] = nullptr;
+	        	    if (selected->adj[p[i][0]]->alive && !selected->adj[p[i][0]]->visible) {
+	            		ArrChunk_insertVis(chunk, selected->adj[p[i][0]]);
+						Voxel_translateDisplay(selected->adj[p[i][0]], player_view_pos, -1);
+						Voxel_rotateDisplay(selected->adj[p[i][0]], x_axis, -1*pitch);
+						Voxel_rotateDisplay(selected->adj[p[i][0]], y_axis_display, -1*yaw);
+					}
+	        	}
+	    	}
 			ArrChunk_removeVoxel(chunk, selected);
+		}
 
 		if (IsKeyPressed(KEY_Q) || player_pos.y < -20) {
 			y_axis_display = y_axis;

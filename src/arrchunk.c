@@ -92,14 +92,14 @@ Voxel* ArrChunk_removeVoxel(ArrChunk* chunk, Voxel* v) {
 
 	v->alive 	= 0;
 	v->visible 	= 0;
-	int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
-	for (int i = 0; i < 6; i ++) {
-		if (v->adj[p[i][0]]) {
-			v->adj[p[i][0]]->adj[p[i][1]] = nullptr;
-			if (v->adj[p[i][0]]->alive && !v->adj[p[i][0]]->visible)
-				ArrChunk_insertVis(chunk, v->adj[p[i][0]]);
-		}
-	}
+//	int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
+//	for (int i = 0; i < 6; i ++) {
+//		if (v->adj[p[i][0]]) {
+//			v->adj[p[i][0]]->adj[p[i][1]] = nullptr;
+//			if (v->adj[p[i][0]]->alive && !v->adj[p[i][0]]->visible)
+//				ArrChunk_insertVis(chunk, v->adj[p[i][0]]);
+//		}
+//	}
 	return v;
 }
 
@@ -150,8 +150,9 @@ void ArrChunk_setVis(ArrChunk* chunk) {
 		for (int y = 0; y < 128; y ++) {
 			for (int z = 0; z < 16; z ++) {
 				Voxel* v = ArrChunk_get(chunk, x, y, z);
-				if (!v || !Voxel_isVisible(v))
+				if (!v || !v->alive || !Voxel_isVisible(v))
 					continue;
+				v->visible = 0;
 				ArrChunk_insertVis(chunk, v);
 			}
 		}
