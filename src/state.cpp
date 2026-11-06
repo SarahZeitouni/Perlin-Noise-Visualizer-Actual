@@ -36,12 +36,14 @@ void State::Opened(int* seed, float* scale2){
         int seedIn = TextBoxGenerator(50, 120, 0);
 
         if (seedIn != -1) {
+            numbers.push_back(seedIn);
             *seed = seedIn;
         }
 
         int scaleIn = TextBoxGenerator(50, 220, 1);
 
         if (scaleIn != -1) {
+            numbers.push_back(scaleIn);
             *scale2 = scaleIn;
         }
 

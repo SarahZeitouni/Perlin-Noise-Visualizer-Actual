@@ -20,7 +20,6 @@ int main(void) {
 	InitWindow(1080, 800, "Perlin-Noise-Visualizer");
 
 	while(!WindowShouldClose()) {
-		//bunch of if statements
 		myState.Update();
 	}
 
