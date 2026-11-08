@@ -64,10 +64,14 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
+	printf("bp0\n");
+
 	PRChunkTree chunkTree;
 	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
 	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
 	PRChunkTree_initLoaded(&chunkTree);
+
+	printf("bp1\n");
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
