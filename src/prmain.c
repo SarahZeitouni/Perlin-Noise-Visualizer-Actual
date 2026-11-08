@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+
 #define PERLIN_WIDTH 	4
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
