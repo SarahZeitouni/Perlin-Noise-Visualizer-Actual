@@ -131,7 +131,6 @@ Voxel* ArrChunk_insertVis(ArrChunk* chunk, Voxel* voxel) {
 		chunk->visible = temp;
 		chunk->vis_cap *= 2;
 	}
-	printf("add\n");
 	chunk->visible[chunk->vis_size] = voxel;
 	chunk->vis_size ++;
 	voxel->visible = 1;
@@ -217,8 +216,5 @@ Vector3 ArrChunk_getOrigin(const Vector3 pos) {
 		(int)o.x < 0 && (int)o.x % 16 	!= 0 ? ((int)o.x/16)*16 - 16 	: ((int)o.x/16)*16,
 		(int)o.y < 0 && (int)o.y % 128 	!= 0 ? ((int)o.y/128)*128 - 128 	: ((int)o.y/128)*128,
 		(int)o.z < 0 && (int)o.z % 16 	!= 0 ? ((int)o.z/16)*16 - 16 	: ((int)o.z/16)*16
-//		(int)o.x < (int)o.x/16 	? ((int)o.x/16)*16 - 16 : ((int)o.x/16)*16,
-//		(int)o.y < (int)o.x/128 ? ((int)o.x/128)*128 - 128 : ((int)o.x/128)*128,
-//		(int)o.z < (int)o.z/16 	? ((int)o.z/16)*16 - 16 : ((int)o.z/16)*16
     };
 }

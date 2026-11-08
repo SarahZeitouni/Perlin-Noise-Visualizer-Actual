@@ -45,7 +45,7 @@ Voxel* Voxel_init(Voxel* voxel, const Vector3 origin) {
 
 	voxel->alive 	= 1;
 	voxel->visible	= 0;
-	voxel->origin 	= origin;
+	voxel->origin 	= Voxel_getOrigin(origin);
 
 	float x = origin.x;
 	float y = origin.y;

@@ -47,6 +47,8 @@ static void ChunkKDT_deleteHelper(KDTNode* node) {
 	free(node);
 }
 void ChunkKDT_delete(ChunkKDT* tree) {
+	if (!tree) return;
+
 	ChunkKDT_deleteHelper(tree->root);
 	tree->root = nullptr;
 }

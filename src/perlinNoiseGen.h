@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-uint8_t* Perlin_generate(const int width, const int height);
+uint8_t* Perlin_generate(const uint32_t width, const uint32_t height);
 
 #endif

@@ -9,9 +9,9 @@ typedef struct vector2 {
 } vector2;
 
 static vector2 randomGradient(int ix, int iy){
-    //this is a bit confusing to me, I would like to do my own research into 
+    //this is a bit confusing to me, I would like to do my own research into
     //  hashing random functions
-    //(this is also a function that i took from soneone else's hash, 
+    //(this is also a function that i took from soneone else's hash,
     //   i did not write this code organically)
     const unsigned w  = 8 * sizeof(unsigned);
     const unsigned s  = w/2;
@@ -26,11 +26,7 @@ static vector2 randomGradient(int ix, int iy){
     float random = a * (3.15149265/~(~0u >> 1)); //frm 0 to 2pi
 
     //create vector from angle
-    vector2 v;
-    v.x = sin(random);
-    v.y = cos(random);
-
-    return v;
+    return (vector2){ sin(random), cos(random) };
 }
 
 //to compute dot products of the distance and gradient vectors
@@ -80,14 +76,14 @@ static float perlin(float x, float y){
     return value;
 }
 
-uint8_t* Perlin_generate(const int width, const int height) {
+uint8_t* Perlin_generate(const uint32_t width, const uint32_t height) {
 
 	uint8_t* pixels = (uint8_t*)calloc(width*height*4, sizeof(uint8_t));
 
 	const int GRID_SIZE = 400;
 
-	for (int x = 0; x < width; x++){
-		for (int y = 0; y < height; y++){
+	for (uint32_t x = 0; x < width; x++){
+		for (uint32_t y = 0; y < height; y++){
 			float val = 0;
 			float freq = 1;
 			float amp = 1;

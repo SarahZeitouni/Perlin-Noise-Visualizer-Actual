@@ -13,6 +13,7 @@ Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scal
 //     |  | 0---|-1
 //     |  |/    |/
 //     |  3-----2  ---> +x (right)
+
 typedef struct Voxel {
 	int alive;
 	int visible;
