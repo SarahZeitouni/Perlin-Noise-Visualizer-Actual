@@ -20,6 +20,11 @@
 //	struct PRChunk* vis;
 //} PRChunk;
 
+#define NUM_CHILDREN 8
+#define X_WIDTH 	16
+#define Y_HEIGHT 	128
+#define Z_DEPTH 	16
+
 PRVoxelNode* PRVoxelNode_init(PRVoxelNode* node, const Vector3 v1, const Vector3 v2, const Vector3 origin) {
 	if (!node) return nullptr;
 
@@ -44,14 +49,14 @@ PRVoxelNode* PRVoxelNode_initVoxel(PRVoxelNode* node, const Vector3 v1, const Ve
 	node->count = 0;
 	node->children = nullptr;
 
-	return nullptr;
+	return node;
 }
 
 void PRVoxelNode_clear(PRVoxelNode* node) {
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++) {
+		for (int i = 0; i < NUM_CHILDREN; i ++) {
 			PRVoxelNode_delete(node->children[i]);
 		}
 		free(node->children);
@@ -69,10 +74,10 @@ void PRVoxelNode_delete(PRVoxelNode* node) {
 PRChunk* PRChunk_init(PRChunk* chunk, const Vector3 origin) {
 	if (!chunk) return nullptr;
 
-	chunk->origin 	= origin;
+	chunk->origin 	= PRChunk_getOrigin(origin);
 	chunk->root 	= nullptr;
 	chunk->vis		= (PRChunk*)malloc(sizeof(PRChunk));
-	chunk->vis->origin 	= origin;
+	chunk->vis->origin 	= chunk->origin;
 	chunk->vis->root 	= nullptr;
 
 	return chunk;
@@ -133,8 +138,8 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 			return node;
 		}
 
-		node->children = (PRVoxelNode**)malloc(8 * sizeof(PRVoxelNode*));
-		for (int i = 0; i < 8; i ++)
+		node->children = (PRVoxelNode**)malloc(NUM_CHILDREN * sizeof(PRVoxelNode*));
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			node->children[i] = nullptr;
 		node->leaf 	= false;
 		PRChunk_insertHelper(node, v1, v2, node->voxel, nullptr);
@@ -183,7 +188,8 @@ PRVoxelNode* PRChunk_insertRaw(PRChunk* chunk, const Vector3 pos) {
 
 	PRVoxelNode* writeback = nullptr;
 
-	chunk->root = PRChunk_insertHelper(chunk->root, chunk->origin, Vector3Add(chunk->origin, (Vector3){ 16, 128, 16}), voxel, &writeback);
+	chunk->root = PRChunk_insertHelper(chunk->root, chunk->origin, Vector3Add(chunk->origin,
+		(Vector3){ X_WIDTH, Y_HEIGHT, Z_DEPTH}), voxel, &writeback);
 
 	if (!writeback) {
 		printf("wb\n");
@@ -292,7 +298,7 @@ static void PRChunk_initVisHelper(PRChunk* chunk, PRVoxelNode* node) {
 	if (!chunk || !node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_initVisHelper(chunk, node->children[i]);
 		return;
 	}
@@ -308,7 +314,7 @@ static void PRChunk_clearVisHelper(PRVoxelNode* node) {
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_clearVisHelper(node->children[i]);
 		free(node->children);
 	}
@@ -332,7 +338,8 @@ PRVoxelNode* PRChunk_insertVis(PRChunk* chunk, Voxel* voxel) {
 
 	PRVoxelNode* writeback = nullptr;
 
-	chunk->vis->root = PRChunk_insertHelper(chunk->vis->root, chunk->origin, Vector3Add(chunk->origin, (Vector3){ 16, 128, 16}), voxel, &writeback);
+	chunk->vis->root = PRChunk_insertHelper(chunk->vis->root, chunk->origin, Vector3Add(chunk->origin,
+		(Vector3){ X_WIDTH, Y_HEIGHT, Z_DEPTH}), voxel, &writeback);
 
 	if (!writeback)
 		printf("viswb\n");
@@ -343,7 +350,7 @@ static void PRChunk_rotateVisHelper(PRVoxelNode* node, const Vector3 axis, const
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_rotateVisHelper(node->children[i], axis, rotation_speed);
 		return;
 	}
@@ -359,7 +366,7 @@ static void PRChunk_translateVisHelper(PRVoxelNode* node, const Vector3 axis, co
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_translateVisHelper(node->children[i], axis, move_speed);
 		return;
 	}
@@ -375,7 +382,7 @@ static void PRChunk_resetVisHelper(PRVoxelNode* node) {
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_resetVisHelper(node->children[i]);
 		return;
 	}
@@ -391,7 +398,7 @@ static void PRChunk_drawVisHelper(PRVoxelNode* node, float x_offset, float y_off
 	if (!node) return;
 
 	if (!node->leaf) {
-		for (int i = 0; i < 8; i ++)
+		for (int i = 0; i < NUM_CHILDREN; i ++)
 			PRChunk_drawVisHelper(node->children[i], x_offset, y_offset, scale);
 		return;
 	}
@@ -445,5 +452,19 @@ bool PRChunk_inRangeRaw(PRChunk* chunk, const Vector3 pos) {
 	if (!chunk)	return false;
 
 	Vector3 o = Vector3Subtract(pos, chunk->origin);
-	return (o.x >= 0 && o.x < 16 && o.y >= 0 && o.y < 128 && o.z >= 0 && o.z < 16);
+	return (o.x >= 0 && o.x < X_WIDTH && o.y >= 0 && o.y < Y_HEIGHT && o.z >= 0 && o.z < Z_DEPTH);
 }
+
+Vector3 PRChunk_getOrigin(const Vector3 pos) {
+    Vector3 o = Voxel_getOrigin(pos);
+    return (Vector3){
+        (int)o.x < 0 && (int)o.x % X_WIDTH   != 0 ? ((int)o.x/X_WIDTH)*X_WIDTH - X_WIDTH    : ((int)o.x/X_WIDTH)*X_WIDTH,
+		(int)o.y < 0 && (int)o.y % Y_HEIGHT  != 0 ? ((int)o.y/Y_HEIGHT)*Y_HEIGHT - Y_HEIGHT : ((int)o.y/Y_HEIGHT)*Y_HEIGHT,
+        (int)o.z < 0 && (int)o.z % Z_DEPTH   != 0 ? ((int)o.z/Z_DEPTH)*Z_DEPTH - Z_DEPTH   	: ((int)o.z/Z_DEPTH)*Z_DEPTH
+    };
+}
+
+#undef Z_DEPTH
+#undef Y_HEIGHT
+#undef X_WIDTH
+#undef NUM_CHILDREN

@@ -21,6 +21,7 @@ typedef struct PRChunk {
 } PRChunk;
 
 PRVoxelNode* PRVoxelNode_init(PRVoxelNode* node, const Vector3 v1, const Vector3 v2, const Vector3 origin);
+PRVoxelNode* PRVoxelNode_initVoxel(PRVoxelNode* node, const Vector3 v1, const Vector3 v2, Voxel* voxel);
 void PRVoxelNode_clear(PRVoxelNode* node);
 void PRVoxelNode_delete(PRVoxelNode* node);
 
@@ -52,5 +53,7 @@ int PRVoxelNode_getOctant(PRVoxelNode* node, const Vector3 pos);
 bool PRVoxelNode_inRange(PRVoxelNode* node, const Vector3 pos);
 
 bool PRChunk_inRangeRaw(PRChunk* chunk, const Vector3 pos);
+
+Vector3 PRChunk_getOrigin(const Vector3 pos);
 
 #endif

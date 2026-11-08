@@ -1,129 +1,37 @@
 #include "voxel.h"
 #include "prchunk.h"
-#include "prchunk.h"
+#include "prchunktree.h"
 #include "perlinNoiseGen.h"
 #include <raylib.h>
 #include <raymath.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-
 #define PERLIN_WIDTH 	4
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
 
-//static void PRChunk_Perlin(PRchunk* tree, int x0, int z0, int x_size, int z_size, float scale) {
-//	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
-//	for (int i = 0; i < x_size; i ++) {
-//		for (int j = 0; j < z_size; j ++) {
-//			PRChunkNode* node = PRchunk_insertNew(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
-//			PRChunk* chunk = node ? node->chunk : nullptr;
-//			if (!chunk)
-//				continue;
-//			for (int x = 0; x < 16; x++) {
-//				for (int z = 0; z < 16; z ++) {
-//					int index = (i*16*64 + j*16 + x*64 + z)*4;
-//					for (int y = 0; y < pixels[index]*scale; y ++)
-//						PRChunk_insertLocal(&chunk, (Vector3){x, y, z});
-//				}
-//			}
-//		}
-//	}
-//	free(pixels);
-//}
+static void PRChunkTree_Perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale) {
+	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
+	for (int i = 0; i < x_size; i ++) {
+		for (int j = 0; j < z_size; j ++) {
+			PRChunkNode* node = PRChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
+			PRChunk* chunk = node ? node->chunk : nullptr;
+			if (!chunk)
+				continue;
+			for (int x = 0; x < 16; x++) {
+				for (int z = 0; z < 16; z ++) {
+					int index = (i*16*64 + j*16 + x*64 + z)*4;
+					for (int y = 0; y < pixels[index]*scale; y ++)
+						PRChunk_insertLocal(chunk, (Vector3){x, y, z});
+				}
+			}
+		}
+	}
+	free(pixels);
+}
 
 int main(void) {
-	PRChunk chunk;
-	PRChunk* c1 = PRChunk_init(&chunk, (Vector3){ 0, 0, 0 });
-	if (c1)
-		printf("c1\n");
-	else
-		printf("n c1\n");
-
-	PRVoxelNode* v1 = PRChunk_insertLocal(&chunk, (Vector3){ 0, 0, 0 });
-	if (v1)
-		printf("v1\n");
-	else
-		printf("n v1\n");
-
-	PRVoxelNode* v2 = PRChunk_insertLocal(&chunk, (Vector3){ 1, 0, 0 });
-	if (v2)
-		printf("v2\n");
-	else
-		printf("n v2\n");
-
-	PRChunk_clear(&chunk);
-	c1 = PRChunk_init(&chunk, (Vector3){ 0, 0, 0 });
-
-	int stop = 0;
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			for (int y = 0; y < 8; y ++) {
-				if (!PRChunk_insertLocal(&chunk, (Vector3){ x, y, z })) {
-					printf("insrt1(%d, %d, %d)\n", x, y, z);
-					stop = 1;
-					break;
-				}
-			}
-			if (stop) break;
-		}
-		if (stop) break;
-	}
-
-	stop = 0;
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			for (int y = 0; y < 8; y ++) {
-				if (!PRChunk_searchLocal(&chunk, (Vector3){ x, y, z })) {
-					printf("srch1(%d, %d, %d)\n", x, y, z);
-					stop = 1;
-					break;
-				}
-			}
-			if (stop) break;
-		}
-		if (stop) break;
-	}
-
-	PRChunk_clear(&chunk);
-	c1 = PRChunk_init(&chunk, (Vector3){ 0, 0, 0 });
-
-	stop = 0;
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			if (!PRChunk_insertLocal(&chunk, (Vector3){ x, 0, z })) {
-				printf("insrt2(%d, 0, %d)\n", x, z);
-				stop = 1;
-				break;
-			}
-		}
-		if (stop) break;
-	}
-
-	PRChunk_initVis(&chunk);
-
-	stop = 0;
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			if (!PRChunk_searchLocal(chunk.vis, (Vector3){ x, 0, z })) {
-				printf("srch2(%d, 0, %d)\n", x, z);
-				stop = 1;
-				break;
-			}
-		}
-		if (stop) break;
-	}
-
-	Voxel* vox = PRChunk_searchLocal_Voxel(&chunk, (Vector3){ 0, 0, 0 });
-	if (vox && Voxel_isVisible(vox))
-		printf("visible\n");
-	else
-		printf("nvisible\n");
-
 	const Vector3 x_axis = { 1.0f, 0.0f, 0.0f };
 	const Vector3 y_axis = { 0.0f, 1.0f, 0.0f };
 	const Vector3 z_axis = { 0.0f, 0.0f, 1.0f };
@@ -155,78 +63,10 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
-	PRChunk_clear(&chunk);
-	PRChunk_init(&chunk, (Vector3){ 0, 0, 0 });
-
-	stop = 0;
-
-	printf("bpm0\n");
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			for (int y = 0; y < 16; y ++) {
-				if(!PRChunk_insertLocal(&chunk, (Vector3){ x, y, z })) {
-					printf("insrt3(%d, %d, %d)\n", x, y, z);
-					stop = 1;
-					break;
-				}
-			}
-			if (stop) break;
-		}
-		if (stop) break;
-	}
-	printf("\n");
-
-	printf("bpm0.1\n");
-
-	PRChunk_initVis(&chunk);
-	PRChunk_translateVis(&chunk, player_view_pos, -1);
-
-	printf("bpm1\n");
-
-	stop = 0;
-
-	for (int x = 0; x < 16; x ++) {
-		for (int z = 0; z < 16; z ++) {
-			for (int y = 0; y < 16; y ++) {
-				if (!PRChunk_searchRaw(&chunk, (Vector3){ x, y, z })) {
-					printf("srch3(%d, %d, %d)\n", x, y, z);
-					stop = 1;
-					break;
-				}
-			}
-			if (stop) break;
-		}
-		if (stop) break;
-	}
-
-	printf("bpm2\n");
-
-	if (!PRChunk_searchRaw(&chunk, (Vector3){ player_pos.x, player_pos.y - 0.5, player_pos.z })) {
-		printf("srch3.1(%f, %f, %f)\n", player_pos.x, player_pos.y - 0.5, player_pos.z);
-	}
-
-	printf("bpm2.1\n");
-
-	if (!PRChunk_searchRaw(&chunk, (Vector3){ player_pos.x - 0.5, player_pos.y - 0.5, player_pos.z - 0.5 })) {
-		printf("srch3.2(%f, %f, %f)\n", player_pos.x - 0.5, player_pos.y - 0.5, player_pos.z - 0.5);
-	}
-
-	printf("bpm2.2\n");
-
-	if (!PRChunk_searchRaw(&chunk, (Vector3){ 7, 15, 7 })) {
-		printf("srch3.3(%d, %d, %d)\n", 7, 15, 7);
-	}
-
-	printf("bpm2.3\n");
-
-	if (!PRChunk_searchRaw(&chunk, (Vector3){ 7.5, 15.5, 7.5 })) {
-		printf("srch3.4(%f, %f, %f)\n", 7.5, 15.5, 7.5);
-	}
-
-	printf("bpm3\n");
-
-//	return 0;
+	PRChunkTree chunkTree;
+	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
+	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
+	PRChunkTree_initLoaded(&chunkTree);
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
