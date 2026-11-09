@@ -59,6 +59,15 @@ void State::Opened(int* seed, float* scale2){
         *scale2 = scaleIn;
     }
 
+
+    
+    DrawText("Press ENTER to \nupdate seed for \n2D noise!", 60, 400, 15, BLACK);
+    DrawText("Scale to change mapping \nfor 3D noise!", 60, 500, 15, BLACK);
+    
+    DrawText("This might take a second to load,\n sorry :)", 60, 600, 10, BLACK);
+
+    
+
     if (is3D && (*seed != 0)){
         currentState = GameState::THREE_D;
         is2D = false;

@@ -15,6 +15,9 @@ static vector2 randomGradient(int ix, int iy, int seed){
     //   i did not write this code organically)
 
     seed = seed % 10;
+    if (seed == 0){
+        seed += 4;
+    }
 
     const unsigned w  = 8 * sizeof(unsigned);
     const unsigned s  = w/2;
