@@ -148,12 +148,12 @@ KDTChunkNode* KDTChunkTree_insertRaw(KDTChunkTree* tree, const Vector3 pos) {
 
 		Vector3 o = chunk->origin;
 
-		chunk->adj[0] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z-1 });
-		chunk->adj[1] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x+1, o.y, o.z });
-		chunk->adj[2] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z+1 });
-		chunk->adj[3] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x-1, o.y, o.z });
-		chunk->adj[4] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y-1, o.z });
-		chunk->adj[5] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y+1, o.z });
+		chunk->adj[0] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z-16 });
+		chunk->adj[1] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x+16, o.y, o.z });
+		chunk->adj[2] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z+16 });
+		chunk->adj[3] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x-16, o.y, o.z });
+		chunk->adj[4] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y-16, o.z });
+		chunk->adj[5] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y+16, o.z });
 		if (chunk->adj[0])
 			chunk->adj[0]->adj[2] = chunk;
 		if (chunk->adj[1])
