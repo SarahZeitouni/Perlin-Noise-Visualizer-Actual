@@ -4,6 +4,8 @@
 #include "voxel.h"
 #include "prchunk.h"
 #include "prchunktree.h"
+#include "kdtchunk.h"
+#include "kdtchunktree.h"
 #include "perlinNoiseGen.h"
 #include <vector>
 
@@ -48,6 +50,7 @@ public:
     virtual void Opened(int* seed, float* scale2);
     virtual void three_d();
     virtual void two_d();
+	virtual void reset_player();
 
     static void PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size,
         int z_size, float scale, int seed);

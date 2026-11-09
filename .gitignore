@@ -3,6 +3,6 @@
 .CMakeLists.txt
 .clangd
 #Makefile
-#src/main_pr.c
-#src/main_kdt.c
+src/main_pr.c
+src/main_kdt.c
 #build
