@@ -15,12 +15,19 @@
 
 int main(void) {
 
-	State myState;
+	SetTraceLogLevel(LOG_NONE);
+	
+	InitWindow(1380, 850, "Perlin-Noise-Visualizer");
+	SetTargetFPS(60);
 
-	InitWindow(1080, 800, "Perlin-Noise-Visualizer");
+    State myState;
 
 	while(!WindowShouldClose()) {
+		BeginDrawing();
+		ClearBackground(RAYWHITE);
+
 		myState.Update();
+		EndDrawing();
 	}
 
 	CloseWindow();

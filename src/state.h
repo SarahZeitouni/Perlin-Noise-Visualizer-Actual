@@ -7,7 +7,7 @@
 #include <vector>
 
 enum class GameState{
-    OPENED,
+    SCRNBLANK,
     THREE_D,
     TWO_D
 };
@@ -19,27 +19,39 @@ typedef struct Sample {
 
 class State{
 public:
-    GameState currentState = GameState::OPENED;
+    State();
+
+    GameState currentState = GameState::SCRNBLANK;
 
     //3d init
     Player player;
     ChunkKDT chunkTree;
+    Camera3D camera;
+
 
     bool three_d_initialized = false;
+    Voxel* selectedVoxel = nullptr;
+    int x_offset = 0;
+    int y_offset = 0;
+    float scale = 1.0f;
 
-     std::vector<int> numbers;
+
+    std::vector<int> numbers;
+
+    Texture2D worldTexture = { 0 };
+    bool worldGenerated = false;
 
     virtual ~State(){}
     virtual void Opened(int* seed, float* scale2);
     virtual void three_d();
-    // virtual void two_d() = 0;
+    virtual void two_d();
 
     static void ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, 
         int z_size, float scale, int seed);
     int TextBoxGenerator(int x, int y, int id);
     int CheckBoxGenerator(int x, int y, int id);
+    Texture2D show_sample(sample *smp);
     
-
 
     void Update();
 };

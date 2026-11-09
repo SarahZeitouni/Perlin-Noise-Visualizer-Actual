@@ -12,50 +12,74 @@
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
 
+State::State(){
+    x_offset = player.screenWidth  / 2;
+    y_offset = player.screenHeight / 2;
+    scale = (float)player.screenHeight * 0.4f;
+
+    camera.position   = (Vector3){0.0f, 5.0f, 10.0f};
+	camera.target     = (Vector3){0.0f, 5.0f, 0.0f};
+	camera.up         = (Vector3){0.0f, 1.0f, 0.0f};
+	camera.fovy       = 45.0f;
+	camera.projection = CAMERA_PERSPECTIVE;
+}
 
 void State::Opened(int* seed, float* scale2){
-    BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+    DrawLineEx({300, 50}, {300, 1080}, 5.0f, BLACK);
+    DrawLineEx({0, 50}, {1920, 50}, 5.0f, BLACK);
 
-        DrawLineEx({300, 50}, {300, 1080}, 5.0f, BLACK);
-        DrawLineEx({0, 50}, {1920, 50}, 5.0f, BLACK);
+    DrawText("Seed", 100, 85, 30, BLACK);
+    DrawText("Scale", 100, 185, 30, BLACK);
 
-        //DrawRectangleLinesEx({50, 120, 200, 35}, 2.0f, BLACK);
-        //DrawRectangleLinesEx({50, 220, 200, 35}, 2.0f, BLACK);
+    bool is2D = CheckBoxGenerator(80, 320,0);
+    bool is3D = CheckBoxGenerator(180, 320,1);
 
-        DrawText("Seed", 100, 85, 30, BLACK);
-        DrawText("Scale", 100, 185, 30, BLACK);
+    DrawText("2D", 85, 300, 15, BLACK);
+    DrawText("3D", 185, 300, 15, BLACK);
 
-        bool is2D = CheckBoxGenerator(80, 320,0);
-        bool is3D = CheckBoxGenerator(180, 320,1);
+    int seedIn = TextBoxGenerator(50, 120, 0);
 
-        DrawText("2D", 85, 300, 15, BLACK);
-        DrawText("3D", 185, 300, 15, BLACK);
-
-        int seedIn = TextBoxGenerator(50, 120, 0);
-
-        if (seedIn != -1) {
-            numbers.push_back(seedIn);
-            *seed = seedIn;
+    if (seedIn != -1 && seedIn != player.seed){
+        if (worldGenerated) {
+            UnloadTexture(worldTexture);
+            worldGenerated = false;
         }
-
-        int scaleIn = TextBoxGenerator(50, 220, 1);
-
-        if (scaleIn != -1) {
-            numbers.push_back(scaleIn);
-            *scale2 = scaleIn;
+        if (three_d_initialized) {
+            ChunkKDT_delete(&chunkTree);
+            three_d_initialized = false;
         }
+        player.seed = seedIn;
+    }
 
-        if (is3D){
-            currentState == GameState::THREE_D;
-        }
+    int scaleIn = TextBoxGenerator(50, 220, 1);
 
+    if (scaleIn != -1 && scaleIn != player.scale2) {
+        numbers.push_back(scaleIn);
+        *scale2 = scaleIn;
+    }
 
-    EndDrawing();
+    if (is3D && (*seed != 0)){
+        currentState = GameState::THREE_D;
+        is2D = false;
+    }
+
+    else if (is2D && (*seed != 0)){
+        currentState = GameState::TWO_D;
+        is3D = false;
+    }
 }
 
 void State::three_d(){
+
+    camera.position = player.player_view_pos;
+    camera.target   = (Vector3){
+        player.player_view_pos.x,
+        player.player_view_pos.y,
+        player.player_view_pos.z
+    } + player.y_axis_display;
+
+    BeginMode3D(camera);
 
     if (!three_d_initialized){
         ChunkKDT_init(&chunkTree);
@@ -157,22 +181,57 @@ void State::three_d(){
             player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
         }
     }
+
+    ChunkKDT_drawVis(&chunkTree, x_offset, y_offset, scale);
+    if (selectedVoxel) Voxel_forceDraw(selectedVoxel, x_offset, y_offset, scale);
+    EndMode3D();
+}
+
+void State::two_d(){
+    if (!worldGenerated){
+	    uint8_t* pixels = Perlin_generate(player.screenWidth, player.screenHeight, player.seed);
+        sample smp = { .name = 5, .pixels = pixels };
+
+        worldTexture = show_sample(&smp);
+
+        free(pixels);
+        worldGenerated = true;
+    }
+    DrawTexture(worldTexture, 0, 0, WHITE);
+}
+
+Texture2D State::show_sample(sample *smp){
+    Image windowImg = {
+        .data = smp->pixels,
+        .width = player.screenWidth,
+        .height = player.screenHeight,
+        .mipmaps = 1,
+		.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    };
+
+
+    //return this
+	Texture2D windowTexture = LoadTextureFromImage(windowImg);
+    return windowTexture;
 }
 
 void State::Update(){
-    switch (currentState){
-        case GameState::OPENED:
-            Opened(&player.seed, &player.scale2);
-            break;
+    BeginScissorMode(300, 50, 1620, 1030);
 
+    switch (currentState){
+        case GameState::SCRNBLANK:
+            break;
         case GameState::THREE_D:
             three_d();
             break;
 
         case GameState::TWO_D:
-            // two_d();
+            two_d();
             break;
     }
+    EndScissorMode();
+
+    Opened(&player.seed, &player.scale2);
 }
 
 void State::ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_size, float scale, int seed) {
@@ -197,9 +256,7 @@ void State::ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_si
 
 int State::TextBoxGenerator(int x, int y, int id) {
 
-    std::vector<std::string> input(10);
-
-    input[2] = {"", ""};
+    static std::string input[2] = {"", ""};
     static int activeBox = -1;
 
     Rectangle box = {(float)x, (float)y, 200, 35};
@@ -240,13 +297,13 @@ int State::TextBoxGenerator(int x, int y, int id) {
 
 int State::CheckBoxGenerator(int x, int y, int id) {
 
-    static int selected = 0;
+    static int selected = -1;
 
     Rectangle box = {(float)x, (float)y, 25, 25};
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
         CheckCollisionPointRec(GetMousePosition(), box)) {
         if (selected == id) {
-            selected = 0;
+            selected = -1;
         }
         else {
             selected = id;
@@ -257,5 +314,5 @@ int State::CheckBoxGenerator(int x, int y, int id) {
         DrawLine(x + 5, y + 12, x + 10, y + 18, BLACK);
         DrawLine(x + 10, y + 18, x + 21, y + 5, BLACK);
     }
-    return selected;
+    return selected == id;
 }

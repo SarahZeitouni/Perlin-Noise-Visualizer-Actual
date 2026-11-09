@@ -41,6 +41,6 @@ class Player{
     int screenWidth = 1080;
     int screenHeight = 800;
     
-	int seed;
+	int seed = 1;
     float scale2;
 };
