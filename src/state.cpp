@@ -61,10 +61,8 @@ void State::Opened(int* seed, float* scale2){
 
 
     
-    DrawText("Press ENTER to \nupdate seed for \n2D noise!", 60, 400, 15, BLACK);
+    DrawText("Press ENTER to \nupdate seed for \n2D (or 3D) noise!", 60, 400, 15, BLACK);
     DrawText("Scale to change mapping \nfor 3D noise!", 60, 500, 15, BLACK);
-    
-    DrawText("This might take a second to load,\n sorry :)", 60, 600, 10, BLACK);
 
     
 
@@ -288,6 +286,7 @@ int State::TextBoxGenerator(int x, int y, int id) {
             int number = std::stoi(input[id]);
             input[id].clear();
             activeBox = -1;
+            DrawText("Loading...", 100, 130, 20, BLACK);
             return number;
         }
     }
