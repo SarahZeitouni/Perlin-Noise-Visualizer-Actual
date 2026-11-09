@@ -170,10 +170,12 @@ int main(void) {
 		}
 
 		// check if no floor beneath player
-//		Voxel* beneath_player = KDTChunk_searchRaw_Voxel(chunk, Vector3Add(player_pos, (Vector3){0, -0.5f, 0}));
 		Voxel* beneath_player = nullptr;
 		for (int i = 0; i < 5; i ++) {
-			Vector3 checkpos = Vector3Add(floor_check[i], (Vector3){ 0, -0.5f, 0 });
+			Vector3 checkpos = Vector3Add(
+				floor_check[i],
+				(Vector3){ player_pos.x, player_pos.y - 0.5, player_pos.z }
+			);
 			KDTChunk* floorChunk = KDTChunkTree_searchRaw_Chunk(&chunkTree, checkpos);
 			beneath_player = KDTChunk_searchRaw_Voxel(floorChunk, checkpos);
 			if (beneath_player)
@@ -184,9 +186,6 @@ int main(void) {
 		}
 
 		if (!isTouchingFloor) {
-//			Voxel* floor = KDTChunk_searchRaw_Voxel(chunk, (Vector3){player_pos.x, player_pos.y + player_velocity.y, player_pos.z});
-//			if (!floor)
-//				floor = KDTChunk_searchRaw_Voxel(chunk, player_pos);
 			Voxel* floor = nullptr;
 			for (int i = 0; i < 5; i ++) {
 				Vector3 checkpos = Vector3Add(
@@ -224,7 +223,6 @@ int main(void) {
 		for (int i = 0; i < 30; i ++) {
 			Vector3 search_pos = Vector3RotateByAxisAngle(z_axis_display, y_axis, PI + yaw);
 			search_pos = Vector3Add(player_view_pos, Vector3Scale(search_pos, i*0.2f));
-//			selected = KDTChunk_searchRaw_Voxel(chunk, search_pos);
 			KDTChunk* searchChunk = KDTChunkTree_searchRaw_Chunk(&chunkTree, search_pos);
 			selected = KDTChunk_searchRaw_Voxel(searchChunk, search_pos);
 			if (selected)

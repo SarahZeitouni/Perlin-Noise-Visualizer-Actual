@@ -43,8 +43,8 @@ KDTChunkNode* KDTChunkNode_initChunk(KDTChunkNode* node, KDTChunk* chunk, uint8_
 void KDTChunkNode_clear(KDTChunkNode* node) {
 	if (!node) return;
 
-	KDTChunkNode_clear(node->children[0]);
-	KDTChunkNode_clear(node->children[1]);
+	KDTChunkNode_delete(node->children[0]);
+	KDTChunkNode_delete(node->children[1]);
 	free(node->children);
 	KDTChunk_delete(node->chunk);
 }

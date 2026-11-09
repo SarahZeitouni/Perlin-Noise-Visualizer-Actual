@@ -75,8 +75,7 @@ void KDTChunk_clear(KDTChunk* chunk) {
 	if (!chunk) return;
 
 	KDTVoxelNode_delete(chunk->root);
-	KDTVoxelNode_delete(chunk->vis->root);
-	free(chunk->vis);
+	KDTChunk_deleteVis(chunk);
 }
 
 void KDTChunk_delete(KDTChunk* chunk) {
@@ -215,8 +214,25 @@ void KDTChunk_initVis(KDTChunk* chunk) {
 	KDTChunk_initVisHelper(chunk, chunk->root);
 }
 
-void KDTChunk_clearVis(KDTChunk* chunk) {}
-void KDTChunk_deleteVis(KDTChunk* chunk) {}
+static void KDTChunk_clearVisHelper(KDTVoxelNode* node) {
+	if (!node) return;
+
+	KDTChunk_clearVisHelper(node->children[0]);
+	KDTChunk_clearVisHelper(node->children[1]);
+	free(node);
+}
+void KDTChunk_clearVis(KDTChunk* chunk) {
+	if (!chunk) return;
+
+	KDTChunk_clearVisHelper(chunk->vis->root);
+}
+
+void KDTChunk_deleteVis(KDTChunk* chunk) {
+	if (!chunk) return;
+
+	KDTChunk_clearVis(chunk);
+	free(chunk->vis);
+}
 
 KDTVoxelNode* KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel) {
 	if (!chunk || !voxel || !Voxel_isVisible(voxel)) return nullptr;
