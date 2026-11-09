@@ -225,8 +225,6 @@ KDTVoxelNode* KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel) {
 
 	chunk->vis->root = KDTChunk_insertHelper(chunk->vis->root, 0, voxel, &writeback);
 
-	if (!writeback)
-		printf("KDTChunk_insertVis.1.0\n");
 	return writeback;
 }
 

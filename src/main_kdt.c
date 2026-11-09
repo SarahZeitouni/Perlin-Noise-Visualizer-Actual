@@ -20,7 +20,6 @@ static void KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, ui
 			KDTChunkNode* node = KDTChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
 			KDTChunk* chunk = node ? node->chunk : nullptr;
 			if (!chunk) {
-				printf("poop\n");
 				continue;
 			}
 			for (int x = 0; x < 16; x++) {
@@ -30,7 +29,6 @@ static void KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, ui
 						KDTChunk_insertLocal(chunk, (Vector3){x, y, z});
 				}
 			}
-			printf("%d\n", i*x_size + j);
 		}
 	}
 	free(pixels);

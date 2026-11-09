@@ -81,15 +81,11 @@ void KDTChunkTree_delete(KDTChunkTree* tree) {
 }
 
 static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t axis, KDTChunk* chunk, KDTChunkNode** writeback) {
-//	printf("insRaw.1.0\n");
-
 	if (!chunk) {
 		if (writeback)
 			*writeback = nullptr;
 		return node;
 	}
-
-//	printf("insRaw.1.1\n");
 
 	if (!node) {
 		node = (KDTChunkNode*)malloc(sizeof(KDTChunkNode));
@@ -98,8 +94,6 @@ static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t
 			*writeback = node;
 		return node;
 	}
-
-//	printf("insRaw.1.2\n");
 
 	float chunk_o[3] = { chunk->origin.x, chunk->origin.y, chunk->origin.z };
 	float node_o[3]	= { node->chunk->origin.x, node->chunk->origin.y, node->chunk->origin.z };
@@ -110,33 +104,21 @@ static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t
 		return node;
 	}
 
-//	printf("insRaw.1.3\n");
-
 	int c = chunk_o[node->axis] >= node_o[node->axis];
 
-//	printf("insRaw.1.4\n");
-
 	node->children[c] = KDTChunkTree_insertHelper(node->children[c], (node->axis+1)%3, chunk, writeback);
-
-//	printf("insRaw.1.5\n");
 
 	return node;
 }
 KDTChunkNode* KDTChunkTree_insertRaw(KDTChunkTree* tree, const Vector3 pos) {
 	if (!tree) return nullptr;
 
-	printf("insRaw.0.0\n");
-
 	KDTChunk* chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
 	KDTChunk_init(chunk, pos);
-
-	printf("insRaw.0.1\n");
 
 	KDTChunkNode* writeback = nullptr;
 
 	tree->root = KDTChunkTree_insertHelper(tree->root, 0, chunk, &writeback);
-
-	printf("insRaw.0.2\n");
 
 	if (!writeback) {
 		free(chunk);
@@ -144,8 +126,6 @@ KDTChunkNode* KDTChunkTree_insertRaw(KDTChunkTree* tree, const Vector3 pos) {
 	}
 
 	if (chunk) {
-		printf("insRaw.0.3\n");
-
 		Vector3 o = chunk->origin;
 
 		chunk->adj[0] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z-16 });
@@ -166,8 +146,6 @@ KDTChunkNode* KDTChunkTree_insertRaw(KDTChunkTree* tree, const Vector3 pos) {
 			chunk->adj[4]->adj[5] = chunk;
 		if (chunk->adj[5])
 			chunk->adj[5]->adj[4] = chunk;
-
-		printf("insRaw.0.4\n");
 	}
 
 	return writeback;
