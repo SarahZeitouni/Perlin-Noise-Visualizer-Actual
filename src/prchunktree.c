@@ -107,7 +107,6 @@ void PRChunkTree_delete(PRChunkTree* tree) {
 
 static PRChunkNode* PRChunkTree_insertHelper(PRChunkNode* node, const Vector3 v1, const Vector3 v2, PRChunk* chunk, PRChunkNode** writeback) {
 	if (!chunk){
-//		printf("bp PRChunkTree_insertHelper.0.0\n");
 		if (writeback)
 			*writeback = nullptr;
 		return node;
@@ -122,7 +121,6 @@ static PRChunkNode* PRChunkTree_insertHelper(PRChunkNode* node, const Vector3 v1
 	}
 
 	if (!PRChunkNode_inRange(node, chunk->origin)) {
-//		printf("bp PRChunkTree_insertHelper.0.1\n");
 		if (writeback)
 			*writeback = nullptr;
 		return node;
@@ -133,7 +131,6 @@ static PRChunkNode* PRChunkTree_insertHelper(PRChunkNode* node, const Vector3 v1
 			&& chunk->origin.y == node->chunk->origin.y
 			&& chunk->origin.z == node->chunk->origin.z)
 		{
-//			printf("bp PRChunkTree_insertHelper.0.2\n");
 			if (writeback)
 				*writeback = nullptr;
 			return node;
@@ -219,20 +216,7 @@ PRChunkNode* PRChunkTree_insertRaw(PRChunkTree* tree, const Vector3 pos) {
 }
 
 PRChunkNode* PRChunkTree_searchRaw(PRChunkTree* tree, const Vector3 pos) {
-//	if (!tree || !PRChunkTree_inRange(tree, pos)) return nullptr;
-	if (!tree) {
-//		printf("bp PRChunkTree_searchRaw.0.0\n");
-		return nullptr;
-	}
-	if (!PRChunkTree_inRange(tree, pos)) {
-//		printf("bp PRChunkTree_searchRaw.0.1\n");
-//		printf("(%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
-//			pos.x, pos.y, pos.z,
-//			tree->v1.x, tree->v1.y, tree->v1.z,
-//			tree->v2.x, tree->v2.y, tree->v2.z
-//		);
-		return nullptr;
-	}
+	if (!tree || !PRChunkTree_inRange(tree, pos)) return nullptr;
 
 	Vector3 o = PRChunk_getOrigin(pos);
 

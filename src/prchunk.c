@@ -116,12 +116,6 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 		PRVoxelNode_initVoxel(node, v1, v2, voxel);
 		if (writeback)
 			*writeback = node;
-//		printf("PRChunk_insertHelper.1.0\n");
-//		printf(
-//			"(%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
-//			voxel->origin.x, voxel->origin.y, voxel->origin.z,
-//			v1.x, v1.y, v1.z, v2.x, v2.y, v2.z
-//		);
 		return node;
 	}
 
@@ -146,7 +140,6 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 			node->children[i] = nullptr;
 		node->leaf 	= false;
 		PRChunk_insertHelper(node, v1, v2, node->voxel, nullptr);
-//		printf("recur\n");
 		node->voxel = nullptr;
 	}
 
@@ -182,10 +175,8 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 	return node;
 }
 PRVoxelNode* PRChunk_insertRaw(PRChunk* chunk, const Vector3 pos) {
-	if (!chunk || !PRChunk_inRangeRaw(chunk, pos)) {
-		printf("PRChunk_insertRaw.0.0\n");
+	if (!chunk || !PRChunk_inRangeRaw(chunk, pos))
 		return nullptr;
-	}
 
 	Voxel* voxel = (Voxel*)malloc(sizeof(Voxel));
 	Voxel_init(voxel, Voxel_getOrigin(pos));
@@ -211,44 +202,13 @@ PRVoxelNode* PRChunk_insertRaw(PRChunk* chunk, const Vector3 pos) {
 		};
 
 		for (int i = 0; i < 6; i ++) {
-//			printf(
-//				"bp adjV.1.0 (%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
-//				adj_v_list[i].x, adj_v_list[i].y, adj_v_list[i].z,
-//				chunk->origin.x, chunk->origin.y, chunk->origin.z,
-//				chunk->origin.x + 16, chunk->origin.y + 128, chunk->origin.z + 16
-//			);
-
 			voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk, adj_v_list[i]);
-//			if (voxel->adj[i])
-//				printf("bp adjV.1.1\n");
 			if (!voxel->adj[i] && chunk->adj[i]) {
-				printf("bp adjV.1.2\n");
 				voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk->adj[i], adj_v_list[i]);
 			}
 			if(voxel->adj[i])
 				voxel->adj[i]->adj[adj_pair_list[i]] = voxel;
-//			else
-//				printf("bp adjV.1.3\n");
 		}
-
-//		voxel->adj[0] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x, o.y, o.z-1 });
-//		voxel->adj[1] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x+1, o.y, o.z });
-//		voxel->adj[2] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x, o.y, o.z+1 });
-//		voxel->adj[3] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x-1, o.y, o.z });
-//		voxel->adj[4] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x, o.y-1, o.z });
-//		voxel->adj[5] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x, o.y+5, o.z });
-//		if (voxel->adj[0])
-//			voxel->adj[0]->adj[2] = voxel;
-//		if (voxel->adj[1])
-//			voxel->adj[1]->adj[3] = voxel;
-//		if (voxel->adj[2])
-//			voxel->adj[2]->adj[0] = voxel;
-//		if (voxel->adj[3])
-//			voxel->adj[3]->adj[1] = voxel;
-//		if (voxel->adj[4])
-//			voxel->adj[4]->adj[5] = voxel;
-//		if (voxel->adj[5])
-//			voxel->adj[5]->adj[4] = voxel;
 	}
 	return writeback;
 }
@@ -260,36 +220,20 @@ PRVoxelNode* PRChunk_insertLocal(PRChunk* chunk, const Vector3 origin) {
 }
 
 PRVoxelNode* PRChunk_searchRaw(PRChunk* chunk, const Vector3 pos) {
-	if (!chunk) {
-//		printf("bp PRChunk_searchRaw.0.0\n");
+	if (!chunk || !PRChunk_inRangeRaw(chunk, pos))
 		return nullptr;
-	}
-	if (!PRChunk_inRangeRaw(chunk, pos)) {
-//		printf("bp PRChunk_searchRaw.0.1\n");
-		return nullptr;
-	}
 
 	Vector3 o = Voxel_getOrigin(pos);
 
 	PRVoxelNode* curr = chunk->root;
 	while (curr && !curr->leaf) {
 		int octant = PRVoxelNode_getOctant(curr, o);
-		if (octant < 0) {
-//			printf("bp PRChunk_searchRaw.0.2\n");
+		if (octant < 0)
 			return nullptr;
-		}
 		curr = curr->children[octant];
 	}
-//	if (!curr || !(curr->voxel->origin.x == o.x && curr->voxel->origin.y == o.y && curr->voxel->origin.z == o.y))
-//			return nullptr;
-	if (!curr) {
-//		printf("bp PRChunk_searchRaw.0.3\n");
-		return nullptr;
-	}
-	if (!(curr->voxel->origin.x == o.x && curr->voxel->origin.y == o.y && curr->voxel->origin.z == o.z)) {
-//		printf("bp PRChunk_searchRaw.0.4\n");
-		return nullptr;
-	}
+	if (!curr || !(curr->voxel->origin.x == o.x && curr->voxel->origin.y == o.y && curr->voxel->origin.z == o.z))
+			return nullptr;
 	return curr;
 }
 
@@ -472,26 +416,11 @@ bool PRVoxelNode_inRange(PRVoxelNode* node, const Vector3 pos) {
 }
 
 bool PRChunk_inRangeRaw(PRChunk* chunk, const Vector3 pos) {
-	if (!chunk)	{
-//		printf("bp PRChunk_inRangeRaw.0.0\n");
+	if (!chunk)
 		return false;
-	}
 
 	Vector3 o = Vector3Subtract(pos, chunk->origin);
-	if (o.x >= 0 && o.x < X_WIDTH && o.y >= 0 && o.y < Y_HEIGHT && o.z >= 0 && o.z < Z_DEPTH) {
-		return true;
-	}
-	else {
-//		printf("bp PRChunk_inRangeRaw.0.1\n(%f, %f, %f): (0, 0, 0) (16, 128, 16)\n",
-//			o.x, o.y, o.z
-//		);
-//		printf("(%d %d) (%d %d) (%d %d)\n",
-//			o.x >= 0, o.x < 16,
-//			o.y >= 0, o.y < 128,
-//			o.z >= 0, o.z < 16
-//		);
-		return false;
-	}
+	return (o.x >= 0 && o.x < X_WIDTH && o.y >= 0 && o.y < Y_HEIGHT && o.z >= 0 && o.z < Z_DEPTH);
 }
 
 Vector3 PRChunk_getOrigin(const Vector3 pos) {

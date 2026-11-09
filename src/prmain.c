@@ -65,92 +65,11 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
-	printf("bp init.1.0\n");
-
 	PRChunkTree chunkTree;
 	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
 	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
 	PRChunkTree_initLoaded(&chunkTree);
-
-	int stop = 0;
-
-	for (int i = 0; i < PERLIN_WIDTH; i ++) {
-		for (int j = 0; j < PERLIN_HEIGHT; j ++) {
-			if (!PRChunkTree_searchRaw(&chunkTree, (Vector3){ i, 0, j })) {
-				printf("bp init.1.1\n");
-				stop = 1;
-				break;
-			}
-		}
-		if (stop) break;
-	}
-
-	stop = 0;
-
-	printf("bp init.2.0\n");
-
-	for (int i = 0; i < PERLIN_WIDTH; i ++) {
-		for (int j = 0; j < PERLIN_HEIGHT; j ++) {
-			if (!PRChunkTree_searchRaw(chunkTree.loaded, (Vector3){ i, 0, j }) || !chunkTree.loaded->root) {
-				printf("bp init.2.1\n");
-				stop = 1;
-				break;
-			}
-		}
-		if (stop) break;
-	}
-
-	printf("bp mainDraw1.0\n");
-
 	PRChunkTree_translateLoaded(&chunkTree, player_view_pos, -1);
-
-//	PRChunk* chunk = (PRChunk*)malloc(sizeof(PRChunk));
-//	PRChunk_init(chunk, (Vector3){ 0, 0, 0 });
-////	for (int x = 0; x < 16; x ++) {
-////		for (int z = 0; z < 16; z ++) {
-////			for (int y = 0; y < 4; y ++) {
-////				PRChunk_insertLocal(chunk, (Vector3){ x, y, z });
-////			}
-////		}
-////		PRChunk_insertLocal(chunk, (Vector3){ x, 0, 0 });
-////	}
-//
-////	int stop = 0;
-////
-////	for (int x = 0; x < 16; x ++) {
-////		for (int z = 0; z < 16; z ++) {
-////			for (int y = 0; y < 4; y ++) {
-////				if (!PRChunk_searchRaw(chunk, (Vector3){ x, 0, z })) {
-////					printf("(%d, %d, %d)\n", x, 0, z);
-////					stop = 1;
-////					break;
-////				}
-////			}
-////			if (stop) break;
-////		}
-////		if (stop) break;
-////	}
-//
-//	printf("begin\n");
-//
-//	PRChunk_insertLocal(chunk, (Vector3){ 0, 0, 0 });
-//	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 0, 0 }))
-//		printf("1\n");
-//	printf("root: %d\n", chunk->root != nullptr);
-//	PRChunk_insertLocal(chunk, (Vector3){ 0, 1, 0 });
-//	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 1, 0 }))
-//		printf("2\n");
-//	PRChunk_insertLocal(chunk, (Vector3){ 0, 0, 1 });
-//	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 0, 1 }))
-//		printf("3\n");
-//	PRChunk_insertLocal(chunk, (Vector3){ 1, 0, 0 });
-//	if (!PRChunk_searchLocal(chunk, (Vector3){ 1, 0, 0 }))
-//		printf("4\n");
-//
-//	PRChunk_initVis(chunk);
-//	PRChunk_translateVis(chunk, player_view_pos, -1);
-//
-//	return 0;
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
@@ -317,6 +236,8 @@ int main(void) {
 			if (selected)
 				break;
 		}
+
+		// remove blocks, maybe add
 
 //		if (selected && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_F))) {
 //			int p[6][2] = { {0, 2}, {1, 3}, {2, 0}, {3, 1}, {4, 5}, {5, 4} };
