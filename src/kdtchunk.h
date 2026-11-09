@@ -2,7 +2,6 @@
 #define KDTCHUNK_H
 
 #include "voxel.h"
-#include <raylib.h>
 #include <raymath.h>
 #include <stdint.h>
 
