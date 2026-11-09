@@ -66,19 +66,36 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
-	KDTChunkTree chunkTree;
-	KDTChunkTree_init(&chunkTree);
+//	KDTChunkTree chunkTree;
+//	KDTChunkTree_init(&chunkTree);
+//
+//	printf("init\n");
+//
+//	KDTChunkTree_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
+//
+//	printf("perlin\n");
+//
+//	KDTChunkTree_initVis(&chunkTree);
+//	KDTChunkTree_translateVis(&chunkTree, player_view_pos, -1);
+//
+//	printf("vis\n");
 
-	printf("init\n");
+	KDTChunk* chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
+	KDTChunk_init(chunk, (Vector3){ 0, 0, 0 });
 
-	KDTChunkTree_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
+	printf("begin\n");
 
-	printf("perlin\n");
+	for (int x = 0; x < 16; x ++) {
+		for (int z = 0; z < 16; z ++) {
+			for (int y = 0; y < 4; y ++) {
+				KDTChunk_insertLocal(chunk, (Vector3){ x, y, z });
+			}
+		}
+	}
 
-	KDTChunkTree_initVis(&chunkTree);
-	KDTChunkTree_translateVis(&chunkTree, player_view_pos, -1);
+	printf("inserted\n");
 
-	printf("vis\n");
+	KDTChunk_initVis(chunk);
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
@@ -86,7 +103,7 @@ int main(void) {
 	HideCursor();
 
 	while(!WindowShouldClose()) {
-		KDTChunk* chunk = KDTChunkTree_searchChunk(&chunkTree, player_pos);
+//		KDTChunk* chunk = KDTChunkTree_searchChunk(&chunkTree, player_pos);
 
 		// load new chunks (got rid of block, fix)
 
@@ -105,25 +122,29 @@ int main(void) {
 //		}
 
 		if (IsKeyDown(KEY_LEFT)) {
-			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, nrotation_speed);
+//			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, nrotation_speed);
+			KDTChunk_rotateVis(chunk, y_axis_display, nrotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, rotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, rotation_speed);
 			yaw += rotation_speed;
 		}
 		if (IsKeyDown(KEY_RIGHT)) {
-			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, rotation_speed);
+//			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, rotation_speed);
+			KDTChunk_rotateVis(chunk, y_axis_display, rotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, nrotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, nrotation_speed);
 			yaw += nrotation_speed;
 		}
 		if (IsKeyDown(KEY_UP) && y_axis_display.z > -0.98f) {
-			KDTChunkTree_rotateVis(&chunkTree, x_axis, nrotation_speed);
+//			KDTChunkTree_rotateVis(&chunkTree, x_axis, nrotation_speed);
+			KDTChunk_rotateVis(chunk, x_axis, nrotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, nrotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, nrotation_speed);
 			pitch += rotation_speed;
 		}
 		if (IsKeyDown(KEY_DOWN) && y_axis_display.z < 0.98f) {
-			KDTChunkTree_rotateVis(&chunkTree, x_axis, rotation_speed);
+//			KDTChunkTree_rotateVis(&chunkTree, x_axis, rotation_speed);
+			KDTChunk_rotateVis(chunk, x_axis, rotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, rotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, rotation_speed);
 			pitch += nrotation_speed;
@@ -266,16 +287,19 @@ int main(void) {
 			player_pos = player_origin;
 			player_view_pos = Vector3Add(player_pos, (Vector3){0, 1.6f, 0});
 			player_velocity = (Vector3){0, 0, 0};
-			KDTChunkTree_resetVis(&chunkTree);
+//			KDTChunkTree_resetVis(&chunkTree);
+			KDTChunk_resetVis(chunk);
 			dtranslate = Vector3Scale(player_view_pos, -1);
 		}
 
-		KDTChunkTree_translateVis(&chunkTree, dtranslate, 1);
+//		KDTChunkTree_translateVis(&chunkTree, dtranslate, 1);
+		KDTChunk_translateVis(chunk, dtranslate, 1);
 
 		BeginDrawing();
 
 			ClearBackground(RAYWHITE);
-			KDTChunkTree_drawVis(&chunkTree, x_offset, y_offset, scale);
+//			KDTChunkTree_drawVis(&chunkTree, x_offset, y_offset, scale);
+			KDTChunk_drawVis(chunk, x_offset, y_offset, scale);
 			if (selected) Voxel_forceDraw(selected, x_offset, y_offset, scale);
 
 			DrawText(TextFormat("(%f, %f, %f)\n(%f, %f, %f)", player_pos.x, player_pos.y, player_pos.z, player_velocity.x, player_velocity.y, player_velocity.z), 0, 0, 20, BLACK);

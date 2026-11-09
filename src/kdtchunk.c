@@ -72,7 +72,6 @@ void KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {
 	if (!chunk || !KDTChunk_inRangeRaw(chunk, pos)) return;
 
 	chunk->root = KDTChunk_insertHelper(chunk->root, Voxel_getOrigin(pos), X_AXIS);
-//	printf("n\n");
 }
 
 void KDTChunk_insertLocal(KDTChunk* chunk, const Vector3 origin) {
@@ -134,6 +133,8 @@ void KDTChunk_deleteVis(KDTChunk* chunk) {
 }
 
 static KDTVoxelNode* KDTChunk_insertVisHelper(KDTVoxelNode* node, Voxel* voxel, const uint8_t axis) {
+	if (!voxel) return nullptr;
+
 	if (!node) {
 		node = (KDTVoxelNode*)malloc(sizeof(KDTVoxelNode));
 		node->voxel = voxel;
@@ -160,19 +161,19 @@ void KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel) {
 
 static void KDTChunk_initVisHelper(KDTChunk* chunk, KDTVoxelNode* node) {
 	if (!chunk || !node) return;
-	printf("0\n");
+//	printf("0\n");
 	KDTChunk_insertVis(chunk, node->voxel);
-	printf("1\n");
+//	printf("1\n");
 	KDTChunk_initVisHelper(chunk, node->children[0]);
-	printf("2\n");
+//	printf("2\n");
 	KDTChunk_initVisHelper(chunk, node->children[1]);
-	printf("3\n");
+//	printf("3\n");
 }
 void KDTChunk_initVis(KDTChunk* chunk) {
 	if (!chunk) return;
 
-	KDTChunk_deleteVis(chunk);
-	printf("d\n");
+//	KDTChunk_deleteVis(chunk);
+//	printf("d\n");
 	KDTChunk_initVisHelper(chunk, chunk->vis->root);
 	printf("int\n");
 }
