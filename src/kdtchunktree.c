@@ -81,7 +81,7 @@ void KDTChunkTree_delete(KDTChunkTree* tree) {
 }
 
 static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t axis, KDTChunk* chunk, KDTChunkNode** writeback) {
-	printf("insRaw.1.0\n");
+//	printf("insRaw.1.0\n");
 
 	if (!chunk) {
 		if (writeback)
@@ -89,7 +89,7 @@ static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t
 		return node;
 	}
 
-	printf("insRaw.1.1\n");
+//	printf("insRaw.1.1\n");
 
 	if (!node) {
 		node = (KDTChunkNode*)malloc(sizeof(KDTChunkNode));
@@ -99,7 +99,7 @@ static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t
 		return node;
 	}
 
-	printf("insRaw.1.2\n");
+//	printf("insRaw.1.2\n");
 
 	float chunk_o[3] = { chunk->origin.x, chunk->origin.y, chunk->origin.z };
 	float node_o[3]	= { node->chunk->origin.x, node->chunk->origin.y, node->chunk->origin.z };
@@ -110,15 +110,15 @@ static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t
 		return node;
 	}
 
-	printf("insRaw.1.3\n");
+//	printf("insRaw.1.3\n");
 
 	int c = chunk_o[node->axis] >= node_o[node->axis];
 
-	printf("insRaw.1.4\n");
+//	printf("insRaw.1.4\n");
 
 	node->children[c] = KDTChunkTree_insertHelper(node->children[c], (node->axis+1)%3, chunk, writeback);
 
-	printf("insRaw.1.5\n");
+//	printf("insRaw.1.5\n");
 
 	return node;
 }
@@ -213,8 +213,9 @@ KDTChunk* KDTChunkTree_searchRaw_Chunk(KDTChunkTree* tree, const Vector3 pos) {
 static void KDTChunkTree_initLoadedHelper(KDTChunkTree* tree, KDTChunkNode* node) {
 	if (!tree || !node) return;
 
+	KDTChunkTree_initLoadedHelper(tree, node->children[0]);
+	KDTChunkTree_initLoadedHelper(tree, node->children[1]);
 	KDTChunkTree_insertLoaded(tree, node->chunk);
-	KDTChunk_initVis(node->chunk);
 }
 void KDTChunkTree_initLoaded(KDTChunkTree* tree) {
 	if (!tree) return;
@@ -250,6 +251,8 @@ KDTChunkNode* KDTChunkTree_insertLoaded(KDTChunkTree* tree, KDTChunk* chunk) {
 
 	tree->loaded->root = KDTChunkTree_insertHelper(tree->loaded->root, 0, chunk, &writeback);
 
+	if (writeback)
+		KDTChunk_initVis(chunk);
 	return writeback;
 }
 

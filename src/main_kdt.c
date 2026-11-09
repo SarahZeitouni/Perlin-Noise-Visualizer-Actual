@@ -30,7 +30,7 @@ static void KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, ui
 						KDTChunk_insertLocal(chunk, (Vector3){x, y, z});
 				}
 			}
-			printf("%d\n", i + j);
+			printf("%d\n", i*x_size + j);
 		}
 	}
 	free(pixels);

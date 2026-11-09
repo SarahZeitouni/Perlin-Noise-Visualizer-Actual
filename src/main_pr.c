@@ -11,9 +11,10 @@
 #define PERLIN_WIDTH 	4
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
+#define PERLIN_SEED		1
 
-static void PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale) {
-	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
+static void PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale, int seed) {
+	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16, seed);
 	for (int i = 0; i < x_size; i ++) {
 		for (int j = 0; j < z_size; j ++) {
 			PRChunkNode* node = PRChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
@@ -67,7 +68,7 @@ int main(void) {
 
 	PRChunkTree chunkTree;
 	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
-	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
+	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, PERLIN_SEED);
 	PRChunkTree_initLoaded(&chunkTree);
 	PRChunkTree_translateLoaded(&chunkTree, player_view_pos, -1);
 
