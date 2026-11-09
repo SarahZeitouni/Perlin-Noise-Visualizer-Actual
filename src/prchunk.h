@@ -18,6 +18,7 @@ typedef struct PRChunk {
 	Vector3 origin;
 	PRVoxelNode* root;
 	struct PRChunk* vis;
+	struct PRChunk* adj[6];
 } PRChunk;
 
 PRVoxelNode* PRVoxelNode_init(PRVoxelNode* node, const Vector3 v1, const Vector3 v2, const Vector3 origin);

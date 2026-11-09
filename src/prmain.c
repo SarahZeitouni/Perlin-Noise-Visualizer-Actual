@@ -12,21 +12,38 @@
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
 
-static void PRChunkTree_Perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale) {
+static void PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale) {
+	int stop = 0;
+
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
 	for (int i = 0; i < x_size; i ++) {
 		for (int j = 0; j < z_size; j ++) {
 			PRChunkNode* node = PRChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
 			PRChunk* chunk = node ? node->chunk : nullptr;
-			if (!chunk)
+			if (!chunk) {
+				printf("bp P.1 (%d, %d)\n", i, j);
 				continue;
+			}
 			for (int x = 0; x < 16; x++) {
 				for (int z = 0; z < 16; z ++) {
 					int index = (i*16*64 + j*16 + x*64 + z)*4;
-					for (int y = 0; y < pixels[index]*scale; y ++)
-						PRChunk_insertLocal(chunk, (Vector3){x, y, z});
+					for (int y = 0; y < pixels[index]*scale; y ++) {
+						printf("bp P.2.0\n");
+						if (!PRChunk_insertLocal(chunk, (Vector3){x, y, z})) {
+							printf("bp P.2.1 (%d, %d, %d)\n", x, y, z);
+						}
+						if (!PRChunk_searchRaw(chunk, (Vector3){ x, y, z})) {
+							printf("bp P.3 (%d, %d, %d)\n", x, y, z);
+							if (!PRChunk_inRangeRaw(chunk, Vector3Add(chunk->origin, (Vector3){ x, y, z })))
+								printf(
+									"bp P.3.1 (%d, %d, %d): (%f, %f, %f)\n",
+									x, y, z, chunk->origin.x, chunk->origin.y, chunk->origin.z
+							);
+						}
+					}
 				}
 			}
+			PRChunk_initVis(chunk);
 		}
 	}
 	free(pixels);
@@ -50,7 +67,7 @@ int main(void) {
 	const float y_offset = (float)screenHeight / 2;
 	const float scale = (float)screenHeight * 0.4f;
 
-	Vector3 player_origin = { 8.0f, 16.0f, 8.0f };
+	Vector3 player_origin = { 8.0f, 64.0f, 8.0f };
 	Vector3 player_pos = player_origin;
 	Vector3 player_view_pos = Vector3Add(player_pos, (Vector3){0, 1.6f, 0});
 	Vector3 player_velocity = { 0.0f, 0.0f, 0.0f };
@@ -64,14 +81,92 @@ int main(void) {
 	float jump_speed = 0.19f;
 	float gravity = -0.015f;
 
-	printf("bp0\n");
+	printf("bp init.1.0\n");
 
-	PRChunkTree chunkTree;
-	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
-	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
-	PRChunkTree_initLoaded(&chunkTree);
+//	PRChunkTree chunkTree;
+//	PRChunkTree_init(&chunkTree, (Vector3){0, 0, 0}, (Vector3){400, 0, 400});
+//	PRChunkTree_perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE);
+//	PRChunkTree_initLoaded(&chunkTree);
+//
+//	int stop = 0;
+//
+//	for (int i = 0; i < PERLIN_WIDTH; i ++) {
+//		for (int j = 0; j < PERLIN_HEIGHT; j ++) {
+//			if (!PRChunkTree_searchRaw(&chunkTree, (Vector3){ i, 0, j })) {
+//				printf("bp init.1.1\n");
+//				stop = 1;
+//				break;
+//			}
+//		}
+//		if (stop) break;
+//	}
+//
+//	stop = 0;
+//
+//	printf("bp init.2.0\n");
+//
+//	for (int i = 0; i < PERLIN_WIDTH; i ++) {
+//		for (int j = 0; j < PERLIN_HEIGHT; j ++) {
+//			if (!PRChunkTree_searchRaw(chunkTree.loaded, (Vector3){ i, 0, j }) || !chunkTree.loaded->root) {
+//				printf("bp init.2.1\n");
+//				stop = 1;
+//				break;
+//			}
+//		}
+//		if (stop) break;
+//	}
+//
+//	printf("bp mainDraw1.0\n");
+//
+//	PRChunkTree_translateLoaded(&chunkTree, player_view_pos, -1);
 
-	printf("bp1\n");
+	PRChunk* chunk = (PRChunk*)malloc(sizeof(PRChunk));
+	PRChunk_init(chunk, (Vector3){ 0, 0, 0 });
+//	for (int x = 0; x < 16; x ++) {
+//		for (int z = 0; z < 16; z ++) {
+//			for (int y = 0; y < 4; y ++) {
+//				PRChunk_insertLocal(chunk, (Vector3){ x, y, z });
+//			}
+//		}
+//		PRChunk_insertLocal(chunk, (Vector3){ x, 0, 0 });
+//	}
+
+//	int stop = 0;
+//
+//	for (int x = 0; x < 16; x ++) {
+//		for (int z = 0; z < 16; z ++) {
+//			for (int y = 0; y < 4; y ++) {
+//				if (!PRChunk_searchRaw(chunk, (Vector3){ x, 0, z })) {
+//					printf("(%d, %d, %d)\n", x, 0, z);
+//					stop = 1;
+//					break;
+//				}
+//			}
+//			if (stop) break;
+//		}
+//		if (stop) break;
+//	}
+
+	printf("begin\n");
+
+	PRChunk_insertLocal(chunk, (Vector3){ 0, 0, 0 });
+	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 0, 0 }))
+		printf("1\n");
+	printf("root: %d\n", chunk->root != nullptr);
+	PRChunk_insertLocal(chunk, (Vector3){ 0, 1, 0 });
+	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 1, 0 }))
+		printf("2\n");
+	PRChunk_insertLocal(chunk, (Vector3){ 0, 0, 1 });
+	if (!PRChunk_searchLocal(chunk, (Vector3){ 0, 0, 1 }))
+		printf("3\n");
+	PRChunk_insertLocal(chunk, (Vector3){ 1, 0, 0 });
+	if (!PRChunk_searchLocal(chunk, (Vector3){ 1, 0, 0 }))
+		printf("4\n");
+
+	PRChunk_initVis(chunk);
+	PRChunk_translateVis(chunk, player_view_pos, -1);
+
+	return 0;
 
 	InitWindow(screenWidth, screenHeight, "Main");
 	SetTargetFPS(60);
@@ -79,6 +174,8 @@ int main(void) {
 	HideCursor();
 
 	while(!WindowShouldClose()) {
+//		PRChunk* chunk = PRChunkTree_searchRaw_Chunk(&chunkTree, player_pos);
+
 		// load new chunks (got rid of block, fix)
 
 //		for (int i = -1; i < 2; i ++) {
@@ -96,25 +193,29 @@ int main(void) {
 //		}
 
 		if (IsKeyDown(KEY_LEFT)) {
-			PRChunk_rotateVis(&chunk, y_axis_display, nrotation_speed);
+//			PRChunkTree_rotateLoaded(&chunkTree, y_axis_display, nrotation_speed);
+			PRChunk_rotateVis(chunk, y_axis_display, nrotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, rotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, rotation_speed);
 			yaw += rotation_speed;
 		}
 		if (IsKeyDown(KEY_RIGHT)) {
-			PRChunk_rotateVis(&chunk, y_axis_display, rotation_speed);
+//			PRChunkTree_rotateLoaded(&chunkTree, y_axis_display, rotation_speed);
+			PRChunk_rotateVis(chunk, y_axis_display, rotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, nrotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, nrotation_speed);
 			yaw += nrotation_speed;
 		}
 		if (IsKeyDown(KEY_UP) && y_axis_display.z > -0.98f) {
-			PRChunk_rotateVis(&chunk, x_axis, nrotation_speed);
+//			PRChunkTree_rotateLoaded(&chunkTree, x_axis, nrotation_speed);
+			PRChunk_rotateVis(chunk, x_axis, nrotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, nrotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, nrotation_speed);
 			pitch += rotation_speed;
 		}
 		if (IsKeyDown(KEY_DOWN) && y_axis_display.z < 0.98f) {
-			PRChunk_rotateVis(&chunk, x_axis, rotation_speed);
+//			PRChunkTree_rotateLoaded(&chunkTree, x_axis, rotation_speed);
+			PRChunk_rotateVis(chunk, x_axis, rotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, rotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, rotation_speed);
 			pitch += nrotation_speed;
@@ -126,7 +227,7 @@ int main(void) {
 			dtranslate = Vector3Add(dtranslate, Vector3Scale(x_axis, move_speed));
 			player_pos = Vector3Add(player_pos, Vector3Scale(x_axis_move, nmove_speed));
 			player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
-			while (PRChunk_searchRaw(&chunk, player_pos) || PRChunk_searchRaw(&chunk, player_view_pos)) {
+			while (PRChunk_searchRaw(chunk, player_pos) || PRChunk_searchRaw(chunk, player_view_pos)) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(x_axis, adjust_speed*nmove_speed));
 				player_pos = Vector3Add(player_pos, Vector3Scale(x_axis_move, adjust_speed*move_speed));
 				player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
@@ -137,7 +238,7 @@ int main(void) {
 			dtranslate = Vector3Add(dtranslate, Vector3Scale(x_axis, nmove_speed));
 			player_pos = Vector3Add(player_pos, Vector3Scale(x_axis_move, move_speed));
 			player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
-			while(PRChunk_searchRaw(&chunk, player_pos) || PRChunk_searchRaw(&chunk, player_view_pos)) {
+			while(PRChunk_searchRaw(chunk, player_pos) || PRChunk_searchRaw(chunk, player_view_pos)) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(x_axis, adjust_speed*move_speed));
 				player_pos = Vector3Add(player_pos, Vector3Scale(x_axis_move, adjust_speed*nmove_speed));
 				player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
@@ -149,7 +250,7 @@ int main(void) {
 			dtranslate = Vector3Add(dtranslate, Vector3Scale(z_axis_display, nmove_speed));
 			player_pos = Vector3Add(player_pos, Vector3Scale(z_axis_move, move_speed));
 			player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
-			while(PRChunk_searchRaw(&chunk, player_pos) || PRChunk_searchRaw(&chunk, player_view_pos)) {
+			while(PRChunk_searchRaw(chunk, player_pos) || PRChunk_searchRaw(chunk, player_view_pos)) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(z_axis_display, adjust_speed*move_speed));
 				player_pos = Vector3Add(player_pos, Vector3Scale(z_axis_move, adjust_speed*nmove_speed));
 				player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
@@ -161,7 +262,7 @@ int main(void) {
 			dtranslate = Vector3Add(dtranslate, Vector3Scale(z_axis_display, move_speed));
 			player_pos = Vector3Add(player_pos, Vector3Scale(z_axis_move, nmove_speed));
 			player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
-			while (PRChunk_searchRaw(&chunk, player_pos) || PRChunk_searchRaw(&chunk, player_view_pos)) {
+			while (PRChunk_searchRaw(chunk, player_pos) || PRChunk_searchRaw(chunk, player_view_pos)) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(z_axis_display, adjust_speed*nmove_speed));
 				player_pos = Vector3Add(player_pos, Vector3Scale(z_axis_move, adjust_speed*move_speed));
 				player_view_pos = (Vector3){ player_pos.x, player_pos.y + 1.6, player_pos.z };
@@ -170,7 +271,7 @@ int main(void) {
 
 		// better horizontal collision wip
 
-//		for (Voxel* v0, * v1; (v0 = PRChunk_searchRaw(&chunk, player_pos)) || (v1 = PRChunk_searchRaw(&chunk, player_view_pos));) {
+//		for (Voxel* v0, * v1; (v0 = PRChunk_searchRaw(chunk, player_pos)) || (v1 = PRChunk_searchRaw(chunk, player_view_pos));) {
 //			int face = Voxel_getNearestXZFace(v1 ? v1 : v0, v1 ? player_view_pos : player_pos);
 //			Vector3 vadjust = (Vector3[]){
 //				Vector3Scale(z_axis_display, adjust_speed*move_speed),
@@ -198,15 +299,15 @@ int main(void) {
 		}
 
 		// check if no floor beneath player
-		Voxel* beneath_player = PRChunk_searchRaw_Voxel(&chunk, Vector3Add(player_pos, (Vector3){0, -0.5f, 0}));
+		Voxel* beneath_player = PRChunk_searchRaw_Voxel(chunk, Vector3Add(player_pos, (Vector3){0, -0.5f, 0}));
 		if (!beneath_player && isTouchingFloor) {
 			isTouchingFloor = false;
 		}
 
 		if (!isTouchingFloor) {
-			Voxel* floor = PRChunk_searchRaw_Voxel(&chunk, (Vector3){player_pos.x, player_pos.y + player_velocity.y, player_pos.z});
+			Voxel* floor = PRChunk_searchRaw_Voxel(chunk, (Vector3){player_pos.x, player_pos.y + player_velocity.y, player_pos.z});
 			if (!floor)
-				floor = PRChunk_searchRaw_Voxel(&chunk, player_pos);
+				floor = PRChunk_searchRaw_Voxel(chunk, player_pos);
 			if (floor && player_velocity.y < 0) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(y_axis_display, player_pos.y - (floor->origin.y + 1)));
 				player_pos.y = floor->origin.y + 1;
@@ -227,7 +328,7 @@ int main(void) {
 		for (int i = 0; i < 30; i ++) {
 			Vector3 search_pos = Vector3RotateByAxisAngle(z_axis_display, y_axis, PI + yaw);
 			search_pos = Vector3Add(player_view_pos, Vector3Scale(search_pos, i*0.2f));
-			selected = PRChunk_searchRaw_Voxel(&chunk, search_pos);
+			selected = PRChunk_searchRaw_Voxel(chunk, search_pos);
 
 			if (selected)
 				break;
@@ -258,21 +359,24 @@ int main(void) {
 			player_pos = player_origin;
 			player_view_pos = Vector3Add(player_pos, (Vector3){0, 1.6f, 0});
 			player_velocity = (Vector3){0, 0, 0};
-			PRChunk_resetVis(&chunk);
+//			PRChunkTree_resetLoaded(&chunkTree);
+			PRChunk_resetVis(chunk);
 			dtranslate = Vector3Scale(player_view_pos, -1);
 		}
 
-		PRChunk_translateVis(&chunk, dtranslate, 1);
+//		PRChunkTree_translateLoaded(&chunkTree, dtranslate, 1);
+		PRChunk_translateVis(chunk, dtranslate, 1);
 
 		BeginDrawing();
 
 			ClearBackground(RAYWHITE);
-			PRChunk_drawVis(&chunk, x_offset, y_offset, scale);
+//			PRChunkTree_drawLoaded(&chunkTree, x_offset, y_offset, scale);
+			PRChunk_drawVis(chunk, x_offset, y_offset, scale);
 			if (selected) Voxel_forceDraw(selected, x_offset, y_offset, scale);
 
 			DrawText(TextFormat("(%f, %f, %f)\n(%f, %f, %f)", player_pos.x, player_pos.y, player_pos.z, player_velocity.x, player_velocity.y, player_velocity.z), 0, 0, 20, BLACK);
 			DrawText(TextFormat("isTouchingFloor: %d", isTouchingFloor), 0, 40, 20, BLACK);
-//			DrawText(TextFormat("chunk: (%f, %f, %f)", chunk ? chunk->origin.x : -1, chunk ? chunk->origin.y : -1, chunk ? chunk->origin.z : -1), 0, 60, 20, BLACK);
+			DrawText(TextFormat("chunk: (%f, %f, %f)", chunk ? chunk->origin.x : -1, chunk ? chunk->origin.y : -1, chunk ? chunk->origin.z : -1), 0, 60, 20, BLACK);
 			DrawText(TextFormat("yaw: %f\n", yaw), 0, 80, 20, BLACK);
 
 			DrawLineV((Vector2){x_offset - 10, y_offset}, (Vector2){x_offset + 10, y_offset}, BLACK);

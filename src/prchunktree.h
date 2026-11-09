@@ -46,7 +46,7 @@ void PRChunkTree_deleteLoaded(PRChunkTree* tree);
 PRChunkNode* PRChunkTree_insertLoaded(PRChunkTree* tree, PRChunk* chunk);
 
 void PRChunkTree_rotateLoaded(PRChunkTree* tree, const Vector3 axis, const float rotation_speed);
-void PRChunkTe_translateLoaded(PRChunkTree* tree, const Vector3 axis, const float move_speed);
+void PRChunkTree_translateLoaded(PRChunkTree* tree, const Vector3 axis, const float move_speed);
 void PRChunkTree_resetLoaded(PRChunkTree* tree);
 void PRChunkTree_drawLoaded(PRChunkTree* tree, float x_offset, float y_offset, float scale);
 
