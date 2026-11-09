@@ -106,7 +106,7 @@ void State::three_d(){
 
 	SetTargetFPS(60);
 
-	HideCursor();
+	//HideCursor();
 
     // load new chunks (got rid of block, fix)
 
@@ -155,12 +155,12 @@ void State::three_d(){
 //			ChunkKDT_translateVis(&chunkTree, x_axis, move_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.move_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.nmove_speed));
-        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         while (ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
 //				ChunkKDT_translateVis(&chunkTree, x_axis, adjust_speed*nmove_speed);
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.nmove_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.move_speed));
-            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
     }
 
@@ -168,12 +168,12 @@ void State::three_d(){
 //			ChunkKDT_translateVis(&chunkTree, x_axis, nmove_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.nmove_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.move_speed));
-        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         while(ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
 //				ChunkKDT_translateVis(&chunkTree, x_axis, adjust_speed*move_speed);
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.move_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.nmove_speed));
-            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
     }
 
@@ -182,12 +182,12 @@ void State::three_d(){
 //			ChunkKDT_translateVis(&chunkTree, z_axis_display, nmove_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.nmove_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.move_speed));
-        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         while(ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
 //				ChunkKDT_translateVis(&chunkTree, z_axis_display, adjust_speed*move_speed);
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.move_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.nmove_speed));
-            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
     }
 
@@ -247,7 +247,7 @@ void State::ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_si
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16, seed);
 	for (int i = 0; i < x_size; i ++) {
 		for (int j = 0; j < z_size; j ++) {
-			KDTNode* node = ChunkKDT_insertNew(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
+			KDTNode* node = ChunkKDT_insertNew(tree, (Vector3){(float)((i + x0)*16), 0.0f, (float)((j + z0)*16)});
 			ArrChunk* chunk = node ? node->chunk : nullptr;
 			if (!chunk)
 				continue;
@@ -255,7 +255,7 @@ void State::ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_si
 				for (int z = 0; z < 16; z ++) {
 					int index = (i*16*64 + j*16 + x*64 + z)*4;
 					for (int y = 0; y < pixels[index]*scale; y ++)
-						ArrChunk_emplaceLocal(chunk, (Vector3){x, y, z});
+						ArrChunk_emplaceLocal(chunk, (Vector3){(float)x, (float)y, (float)z});
 				}
 			}
 		}
