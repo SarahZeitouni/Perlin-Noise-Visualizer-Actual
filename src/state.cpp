@@ -43,6 +43,10 @@ void State::Opened(int* seed, float* scale2){
         if (three_d_initialized) {
 			PRChunkTree_clear(&chunkTree);
 			PRChunkTree_init(&chunkTree, (Vector3){ 0, 0, 0 }, (Vector3){400, 0, 400});
+			player.player_pos = player.player_origin;
+			player.player_view_pos = Vector3Add(player.player_pos, (Vector3){ 0, 1.6f, 0 });
+			player.y_axis_display = player.y_axis;
+			player.z_axis_display = player.z_axis;
             three_d_initialized = false;
         }
         player.seed = seedIn;

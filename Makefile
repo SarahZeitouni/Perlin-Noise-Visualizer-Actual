@@ -9,13 +9,13 @@ OUT = ./build/main.o
 .PHONY: clean
 
 main:
-	g++ src/main.c src/kdt*.c src/kdt*.h src/pr*.c src/pr*.h src/voxel.c src/voxel.h src/player.h src/state.cpp src/state.h src/perlinNoiseGen.c src/perlinNoiseGen.h -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
+	g++ src/main.c src/kdt*.c src/pr*.c src/voxel.c src/state.cpp src/perlinNoiseGen.c -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
 
 kdt:
-	gcc src/main_kdt.c src/kdt*.c src/kdt*.h src/voxel.* src/perlinNoiseGen.* -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
+	gcc src/main_kdt.c src/kdt*.c src/voxel.c src/perlinNoiseGen.c -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
 
 pr:
-	gcc src/main_pr.c src/pr*.c src/pr*.h src/voxel.* src/perlinNoiseGen.* -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
+	gcc src/main_pr.c src/pr*.c src/voxel.c src/perlinNoiseGen.c -o $(OUT) $(LIB_OPS) $(COMP_FLAGS)
 
 run:
 	$(OUT)
