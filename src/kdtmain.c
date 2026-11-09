@@ -80,7 +80,12 @@ int main(void) {
 //
 //	printf("vis\n");
 
+	printf("0\n");
+
 	KDTChunk* chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
+
+	printf("1\n");
+
 	KDTChunk_init(chunk, (Vector3){ 0, 0, 0 });
 
 	printf("begin\n");
@@ -228,15 +233,15 @@ int main(void) {
 		}
 
 		// check if no floor beneath player
-		Voxel* beneath_player = KDTChunk_searchRawVoxel(chunk, Vector3Add(player_pos, (Vector3){0, -0.5f, 0}));
+		Voxel* beneath_player = KDTChunk_searchRaw_Voxel(chunk, Vector3Add(player_pos, (Vector3){0, -0.5f, 0}));
 		if (!beneath_player && isTouchingFloor) {
 			isTouchingFloor = false;
 		}
 
 		if (!isTouchingFloor) {
-			Voxel* floor = KDTChunk_searchRawVoxel(chunk, (Vector3){player_pos.x, player_pos.y + player_velocity.y, player_pos.z});
+			Voxel* floor = KDTChunk_searchRaw_Voxel(chunk, (Vector3){player_pos.x, player_pos.y + player_velocity.y, player_pos.z});
 			if (!floor)
-				floor = KDTChunk_searchRawVoxel(chunk, player_pos);
+				floor = KDTChunk_searchRaw_Voxel(chunk, player_pos);
 			if (floor && player_velocity.y < 0) {
 				dtranslate = Vector3Add(dtranslate, Vector3Scale(y_axis_display, player_pos.y - (floor->origin.y + 1)));
 				player_pos.y = floor->origin.y + 1;
@@ -257,7 +262,7 @@ int main(void) {
 		for (int i = 0; i < 30; i ++) {
 			Vector3 search_pos = Vector3RotateByAxisAngle(z_axis_display, y_axis, PI + yaw);
 			search_pos = Vector3Add(player_view_pos, Vector3Scale(search_pos, i*0.2f));
-			selected = KDTChunk_searchRawVoxel(chunk, search_pos);
+			selected = KDTChunk_searchRaw_Voxel(chunk, search_pos);
 			if (selected)
 				break;
 		}

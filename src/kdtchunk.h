@@ -40,7 +40,7 @@ void KDTChunk_initVis(KDTChunk* chunk);
 void KDTChunk_clearVis(KDTChunk* chunk);
 void KDTChunk_deleteVis(KDTChunk* chunk);
 
-void KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel);
+KDTVoxelNode* KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel);
 
 void KDTChunk_rotateVis(KDTChunk* chunk, const Vector3 axis, const float rotation_speed);
 void KDTChunk_translateVis(KDTChunk* chunk, const Vector3 axis, const float move_speed);

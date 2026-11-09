@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 //typedef struct KDTVoxelNode {
 //	Voxel* 	voxel;
@@ -53,10 +54,11 @@ void KDTVoxelNode_delete(KDTVoxelNode* node) {
 }
 
 KDTChunk* KDTChunk_init(KDTChunk* chunk, const Vector3 origin) {
-	if (!chunk) return;
+	if (!chunk) return nullptr;
 
 	chunk->origin 	= KDTChunk_getOrigin(origin);
 	chunk->root 	= nullptr;
+	chunk->vis 			= (KDTChunk*)malloc(sizeof(KDTChunk));
 	chunk->vis->origin 	= chunk->origin;
 	chunk->vis->root 	= nullptr;
 
@@ -97,13 +99,11 @@ static KDTVoxelNode* KDTChunk_insertHelper(KDTVoxelNode* node, const uint8_t axi
 	float node_o[3] = { node->voxel->origin.x, node->voxel->origin.y, node->voxel->origin.z };
 
 	int c = voxel_o[axis] >= node_o[axis];
-	node->children[c] = KDTChunk_insertRawHelper(node->children[c], (axis+1)%3, voxel, writeback);
+	node->children[c] = KDTChunk_insertHelper(node->children[c], (axis+1)%3, voxel, writeback);
 	return node;
 }
 KDTVoxelNode* KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {
 	if (!chunk || !KDTChunk_inRangeRaw(chunk, pos)) return nullptr;
-
-	Vector3 o = KDTChunk_getOrigin(pos);
 
 	Voxel* voxel = (Voxel*)malloc(sizeof(Voxel));
 	Voxel_init(voxel, pos);
@@ -112,9 +112,10 @@ KDTVoxelNode* KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {
 
 	chunk->root = KDTChunk_insertHelper(chunk->root, 0, voxel, &writeback);
 
-	if (!writeback)
+	if (!writeback) {
 		free(voxel);
 		voxel = nullptr;
+	}
 
 	return writeback;
 }
@@ -142,7 +143,7 @@ static void KDTChunk_searchHelper(KDTVoxelNode* node, const Vector3 origin, KDTV
 	}
 
 	int c = search_o[node->axis] >= node_o[node->axis];
-	KDTChunk_searchHelper(node->children[0], origin, writeback);
+	KDTChunk_searchHelper(node->children[c], origin, writeback);
 }
 KDTVoxelNode* KDTChunk_searchRaw(KDTChunk* chunk, const Vector3 pos) {
 	if (!chunk || !KDTChunk_inRangeRaw(chunk, pos)) return nullptr;
