@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct KDTChunkNode {
-	KDTChunk* 	chunk;
-	uint8_t 	axis;
-	struct 	KDTChunkNode* children[2];
-} KDTChunkNode;
-
-typedef struct KDTChunkTree {
-	KDTChunkNode* root;
-} KDTChunkTree;
+//typedef struct KDTChunkNode {
+//	KDTChunk* 	chunk;
+//	uint8_t 	axis;
+//	struct 	KDTChunkNode* children[2];
+//} KDTChunkNode;
+//
+//typedef struct KDTChunkTree {
+//	KDTChunkNode* root;
+//} KDTChunkTree;
 
 KDTChunkNode* KDTChunkNode_init(KDTChunkNode* node, KDTChunk* chunk, uint8_t axis) {
 	if (!node || !chunk) return nullptr;

@@ -128,7 +128,7 @@ KDTVoxelNode* KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {
 		for (int i = 0; i < 6; i ++) {
 			voxel->adj[i] = KDTChunk_searchRaw_Voxel(chunk, k[i]);
 			if (voxel->adj[i])
-				voxel->adj[i]->adj[m[i]] = voxel;
+				voxel->adj[i]->adj[e[i]] = voxel;
 		}
 	}
 

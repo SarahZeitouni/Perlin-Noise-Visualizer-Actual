@@ -8,30 +8,37 @@ typedef struct vector2 {
 	float y;
 } vector2;
 
-static vector2 randomGradient(int ix, int iy){
-    //this is a bit confusing to me, I would like to do my own research into
+static vector2 randomGradient(int ix, int iy, int seed){
+    //this is a bit confusing to me, I would like to do my own research into 
     //  hashing random functions
-    //(this is also a function that i took from soneone else's hash,
+    //(this is also a function that i took from soneone else's hash, 
     //   i did not write this code organically)
+
+    seed = seed % 10;
+
     const unsigned w  = 8 * sizeof(unsigned);
     const unsigned s  = w/2;
     unsigned a = ix, b = iy;
-    a *= 3284157443;
+    a *= 3284157443 * seed;
 
     b ^= a << s | a >> (w - s);
-    b *= 1911520717;
+    b *= 1911520717 * seed;
 
     a ^= b << s | b >> (w - s);
     a *= 2048419325;
     float random = a * (3.15149265/~(~0u >> 1)); //frm 0 to 2pi
 
     //create vector from angle
-    return (vector2){ sin(random), cos(random) };
+    vector2 v;
+    v.x = sin(random);
+    v.y = cos(random);
+
+    return v;
 }
 
 //to compute dot products of the distance and gradient vectors
-static float dotGridGradient(int ix, int iy, float x, float y){
-    vector2 gradient = randomGradient(ix, iy);
+static float dotGridGradient(int ix, int iy, float x, float y, int seed){
+    vector2 gradient = randomGradient(ix, iy, seed);
 
     //compute distance vector
     float dx = x - (float)ix;
@@ -49,7 +56,7 @@ static float lerp(float a0, float a1, float w){
     return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
-static float perlin(float x, float y){
+static float perlin(float x, float y, int seed){
     //determine grid cell corner coords
     int x0 = (int)x;
     int y0 = (int)y;
@@ -61,13 +68,13 @@ static float perlin(float x, float y){
     float sy = y - (float)y0;
 
     //compare + interpolate top two corners
-    float n0 = dotGridGradient(x0, y0,   x, y);
-    float n1 = dotGridGradient(x1, y0, x, y);
+    float n0 = dotGridGradient(x0, y0,   x, y, seed);
+    float n1 = dotGridGradient(x1, y0, x, y, seed);
     float ix0 = lerp(n0, n1, sx);
 
     //compare + interpolate bottom two corners
-    n0 = dotGridGradient(x0, y1, x, y);
-    n1 = dotGridGradient(x1, y1, x, y);
+    n0 = dotGridGradient(x0, y1, x, y, seed);
+    n1 = dotGridGradient(x1, y1, x, y, seed);
     float ix1 = lerp(n0, n1, sx);
 
     //lerp the final corners
@@ -76,24 +83,37 @@ static float perlin(float x, float y){
     return value;
 }
 
-uint8_t* Perlin_generate(const uint32_t width, const uint32_t height) {
+uint8_t* Perlin_generate(const int width, const int height, int seed) {
 
 	uint8_t* pixels = (uint8_t*)calloc(width*height*4, sizeof(uint8_t));
 
-	const int GRID_SIZE = 400;
+    if (pixels == nullptr) return nullptr;
 
-	for (uint32_t x = 0; x < width; x++){
-		for (uint32_t y = 0; y < height; y++){
+	const int GRID_SIZE = 400;
+    const int OCTAVES = 12;
+
+    float frequencies[OCTAVES];
+    float amplitudes[OCTAVES];
+
+    float freq = 1;
+    float amp = 1;
+
+    for (int i = 0; i < OCTAVES; i++) {
+        frequencies[i] = freq / GRID_SIZE;
+        amplitudes[i] = amp;
+
+        freq *= 2.0f;
+        amp *= 0.5f;
+    }
+
+
+	for (int x = 0; x < width; x++){
+		for (int y = 0; y < height; y++){
 			float val = 0;
-			float freq = 1;
-			float amp = 1;
 
 			//layering noise on top of each other 12 times
-			for (int i = 0; i < 12; i++){
-				val += perlin(x * (float)freq/GRID_SIZE, y * (float)freq/GRID_SIZE) * amp;
-
-				freq *=2;
-				amp /=2;
+			for (int i = 0; i < OCTAVES; i++){
+				val += perlin(x * frequencies[i], y * frequencies[i], seed) * amplitudes[i];
 			}
 			val *= 1.2;
 
