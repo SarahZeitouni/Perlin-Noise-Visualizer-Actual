@@ -13,37 +13,21 @@
 #define PERLIN_SCALE	0.25
 
 static void PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale) {
-	int stop = 0;
-
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16);
 	for (int i = 0; i < x_size; i ++) {
 		for (int j = 0; j < z_size; j ++) {
 			PRChunkNode* node = PRChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
 			PRChunk* chunk = node ? node->chunk : nullptr;
-			if (!chunk) {
-				printf("bp P.1 (%d, %d)\n", i, j);
+			if (!chunk)
 				continue;
-			}
 			for (int x = 0; x < 16; x++) {
 				for (int z = 0; z < 16; z ++) {
 					int index = (i*16*64 + j*16 + x*64 + z)*4;
 					for (int y = 0; y < pixels[index]*scale; y ++) {
-						printf("bp P.2.0\n");
-						if (!PRChunk_insertLocal(chunk, (Vector3){x, y, z})) {
-							printf("bp P.2.1 (%d, %d, %d)\n", x, y, z);
-						}
-						if (!PRChunk_searchRaw(chunk, (Vector3){ x, y, z})) {
-							printf("bp P.3 (%d, %d, %d)\n", x, y, z);
-							if (!PRChunk_inRangeRaw(chunk, Vector3Add(chunk->origin, (Vector3){ x, y, z })))
-								printf(
-									"bp P.3.1 (%d, %d, %d): (%f, %f, %f)\n",
-									x, y, z, chunk->origin.x, chunk->origin.y, chunk->origin.z
-							);
-						}
+						PRChunk_insertLocal(chunk, (Vector3){x, y, z});
 					}
 				}
 			}
-			PRChunk_initVis(chunk);
 		}
 	}
 	free(pixels);
