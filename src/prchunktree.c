@@ -243,7 +243,7 @@ PRChunkNode* PRChunkTree_searchRaw(PRChunkTree* tree, const Vector3 pos) {
 			return nullptr;
 		curr = curr->children[octant];
 	}
-	if (!curr || !(curr->chunk->origin.x == o.x && curr->chunk->origin.y == o.y && curr->chunk->origin.z == o.y))
+	if (!curr || !(curr->chunk->origin.x == o.x && curr->chunk->origin.y == o.y && curr->chunk->origin.z == o.z))
 			return nullptr;
 	return curr;
 }

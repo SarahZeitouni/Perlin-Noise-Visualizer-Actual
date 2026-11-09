@@ -116,12 +116,12 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 		PRVoxelNode_initVoxel(node, v1, v2, voxel);
 		if (writeback)
 			*writeback = node;
-		printf("PRChunk_insertHelper.1.0\n");
-		printf(
-			"(%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
-			voxel->origin.x, voxel->origin.y, voxel->origin.z,
-			v1.x, v1.y, v1.z, v2.x, v2.y, v2.z
-		);
+//		printf("PRChunk_insertHelper.1.0\n");
+//		printf(
+//			"(%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
+//			voxel->origin.x, voxel->origin.y, voxel->origin.z,
+//			v1.x, v1.y, v1.z, v2.x, v2.y, v2.z
+//		);
 		return node;
 	}
 
@@ -146,7 +146,7 @@ static PRVoxelNode* PRChunk_insertHelper(PRVoxelNode* node, const Vector3 v1, co
 			node->children[i] = nullptr;
 		node->leaf 	= false;
 		PRChunk_insertHelper(node, v1, v2, node->voxel, nullptr);
-		printf("recur\n");
+//		printf("recur\n");
 		node->voxel = nullptr;
 	}
 
@@ -201,34 +201,35 @@ PRVoxelNode* PRChunk_insertRaw(PRChunk* chunk, const Vector3 pos) {
 	}
 
 	if (voxel) {
-//		Vector3 o = voxel->origin;
-//
-//		int adj_pair_list[6] = { 2, 3, 0, 1, 5, 4 };
-//
-//		Vector3 adj_v_list[6] = {
-//			(Vector3){ o.x, o.y, o.z-1 }, (Vector3){ o.x+1, o.y, o.z }, (Vector3){ o.x, o.y, o.z+1 },
-//			(Vector3){ o.x-1, o.y, o.z }, (Vector3){ o.x, o.y-1, o.z }, (Vector3){ o.x, o.y+1, o.z }
-//		};
-//
-//		for (int i = 0; i < 6; i ++) {
+		Vector3 o = voxel->origin;
+
+		int adj_pair_list[6] = { 2, 3, 0, 1, 5, 4 };
+
+		Vector3 adj_v_list[6] = {
+			(Vector3){ o.x, o.y, o.z-1 }, (Vector3){ o.x+1, o.y, o.z }, (Vector3){ o.x, o.y, o.z+1 },
+			(Vector3){ o.x-1, o.y, o.z }, (Vector3){ o.x, o.y-1, o.z }, (Vector3){ o.x, o.y+1, o.z }
+		};
+
+		for (int i = 0; i < 6; i ++) {
 //			printf(
 //				"bp adjV.1.0 (%f, %f, %f): (%f, %f, %f)-(%f, %f, %f)\n",
 //				adj_v_list[i].x, adj_v_list[i].y, adj_v_list[i].z,
 //				chunk->origin.x, chunk->origin.y, chunk->origin.z,
 //				chunk->origin.x + 16, chunk->origin.y + 128, chunk->origin.z + 16
 //			);
-//			voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk, adj_v_list[i]);
+
+			voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk, adj_v_list[i]);
 //			if (voxel->adj[i])
 //				printf("bp adjV.1.1\n");
-//			if (!voxel->adj[i] && chunk->adj[i]) {
-//				printf("bp adjV.1.2\n");
-//				voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk->adj[i], adj_v_list[i]);
-//			}
-//			if(voxel->adj[i])
-//				voxel->adj[i]->adj[adj_pair_list[i]] = voxel;
+			if (!voxel->adj[i] && chunk->adj[i]) {
+				printf("bp adjV.1.2\n");
+				voxel->adj[i] = PRChunk_searchRaw_Voxel(chunk->adj[i], adj_v_list[i]);
+			}
+			if(voxel->adj[i])
+				voxel->adj[i]->adj[adj_pair_list[i]] = voxel;
 //			else
 //				printf("bp adjV.1.3\n");
-//		}
+		}
 
 //		voxel->adj[0] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x, o.y, o.z-1 });
 //		voxel->adj[1] = PRChunk_searchRaw_Voxel(chunk, (Vector3){ o.x+1, o.y, o.z });
