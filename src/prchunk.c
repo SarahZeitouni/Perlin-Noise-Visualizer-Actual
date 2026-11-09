@@ -18,6 +18,7 @@
 //	Vector3 origin;
 //	PRVoxelNode* root;
 //	struct PRChunk* vis;
+//	struct PRChunk* adj[6];
 //} PRChunk;
 
 #define NUM_CHILDREN 8
@@ -79,6 +80,9 @@ PRChunk* PRChunk_init(PRChunk* chunk, const Vector3 origin) {
 	chunk->vis		= (PRChunk*)malloc(sizeof(PRChunk));
 	chunk->vis->origin 	= chunk->origin;
 	chunk->vis->root 	= nullptr;
+
+	for (int i = 0; i < 6; i ++)
+		chunk->adj[i] = nullptr;
 
 	return chunk;
 }

@@ -23,7 +23,7 @@ KDTVoxelNode* KDTVoxelNode_init(KDTVoxelNode* node, const Vector3 origin, const 
 
 	node->voxel = (Voxel*)malloc(sizeof(Voxel));
 	Voxel_init(node->voxel, origin);
-	node->axis = axis;
+	node->axis = axis%3;
 	node->children[0] = nullptr;
 	node->children[1] = nullptr;
 
@@ -44,8 +44,10 @@ KDTVoxelNode* KDTVoxelNode_initVoxel(KDTVoxelNode* node, Voxel* voxel, const uin
 void KDTVoxelNode_clear(KDTVoxelNode* node) {
 	if (!node) return;
 
-	free(node->voxel);
+	KDTVoxelNode_clear(node->children[0]);
+	KDTVoxelNode_clear(node->children[1]);
 	free(node->children);
+	free(node->voxel);
 }
 void KDTVoxelNode_delete(KDTVoxelNode* node) {
 	if (!node) return;
@@ -63,14 +65,17 @@ KDTChunk* KDTChunk_init(KDTChunk* chunk, const Vector3 origin) {
 	chunk->vis->origin 	= chunk->origin;
 	chunk->vis->root 	= nullptr;
 
+	for (int i = 0; i < 6; i ++)
+		chunk->adj[i] = nullptr;
+
 	return chunk;
 }
 
 void KDTChunk_clear(KDTChunk* chunk) {
 	if (!chunk) return;
 
-	free(chunk->root);
-	free(chunk->vis->root);
+	KDTVoxelNode_delete(chunk->root);
+	KDTVoxelNode_delete(chunk->vis->root);
 	free(chunk->vis);
 }
 
@@ -99,8 +104,14 @@ static KDTVoxelNode* KDTChunk_insertHelper(KDTVoxelNode* node, const uint8_t axi
 	float voxel_o[3] = { voxel->origin.x, voxel->origin.y, voxel->origin.z };
 	float node_o[3] = { node->voxel->origin.x, node->voxel->origin.y, node->voxel->origin.z };
 
-	int c = voxel_o[axis] >= node_o[axis];
-	node->children[c] = KDTChunk_insertHelper(node->children[c], (axis+1)%3, voxel, writeback);
+	if (voxel_o[0] == node_o[0] && voxel_o[1] == node_o[1] && voxel_o[2] == node_o[2]) {
+		if (writeback)
+			*writeback = nullptr;
+		return node;
+	}
+
+	int c = voxel_o[node->axis] >= node_o[node->axis];
+	node->children[c] = KDTChunk_insertHelper(node->children[c], (node->axis+1)%3, voxel, writeback);
 	return node;
 }
 KDTVoxelNode* KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {

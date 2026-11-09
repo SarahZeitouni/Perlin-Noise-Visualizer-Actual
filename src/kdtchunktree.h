@@ -35,6 +35,8 @@ void KDTChunkTree_initLoaded(KDTChunkTree* tree);
 void KDTChunkTree_clearLoaded(KDTChunkTree* tree);
 void KDTChunkTree_deleteLoaded(KDTChunkTree* tree);
 
+KDTChunkNode* KDTChunkTree_insertLoaded(KDTChunkTree* tree, KDTChunk* chunk);
+
 void KDTChunkTree_rotateLoaded(KDTChunkTree* tree, const Vector3 axis, const float rotation_speed);
 void KDTChunkTree_translateLoaded(KDTChunkTree* tree, const Vector3 axis, const float move_speed);
 void KDTChunkTree_resetLoaded(KDTChunkTree* tree);

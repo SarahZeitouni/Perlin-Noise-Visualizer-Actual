@@ -11,12 +11,13 @@
 #define PERLIN_WIDTH 	4
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
+#define PERLIN_SEED		1
 
 static void KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, uint32_t x_size, uint32_t z_size, float scale, int seed) {
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16, seed);
 	for (uint32_t i = 0; i < x_size; i ++) {
 		for (uint32_t j = 0; j < z_size; j ++) {
-			KDTChunkNode* node = KDTChunkTree_insertNew(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
+			KDTChunkNode* node = KDTChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
 			KDTChunk* chunk = node ? node->chunk : nullptr;
 			if (!chunk) {
 				printf("poop\n");
@@ -29,6 +30,7 @@ static void KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, ui
 						KDTChunk_insertLocal(chunk, (Vector3){x, y, z});
 				}
 			}
+			printf("%d\n", i + j);
 		}
 	}
 	free(pixels);
@@ -71,12 +73,12 @@ int main(void) {
 
 	printf("init\n");
 
-	KDTChunkTree_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, 1);
+	KDTChunkTree_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, PERLIN_SEED);
 
 	printf("perlin\n");
 
-	KDTChunkTree_initVis(&chunkTree);
-	KDTChunkTree_translateVis(&chunkTree, player_view_pos, -1);
+	KDTChunkTree_initLoaded(&chunkTree);
+	KDTChunkTree_translateLoaded(&chunkTree, player_view_pos, -1);
 
 	printf("vis\n");
 
@@ -114,32 +116,32 @@ int main(void) {
 	HideCursor();
 
 	while(!WindowShouldClose()) {
-		KDTChunk* chunk = KDTChunkTree_searchChunk(&chunkTree, player_pos);
+		KDTChunk* chunk = KDTChunkTree_searchRaw_Chunk(&chunkTree, player_pos);
 
 		if (IsKeyDown(KEY_LEFT)) {
-			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, nrotation_speed);
-			KDTChunk_rotateVis(chunk, y_axis_display, nrotation_speed);
+			KDTChunkTree_rotateLoaded(&chunkTree, y_axis_display, nrotation_speed);
+//			KDTChunk_rotateVis(chunk, y_axis_display, nrotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, rotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, rotation_speed);
 			yaw += rotation_speed;
 		}
 		if (IsKeyDown(KEY_RIGHT)) {
-			KDTChunkTree_rotateVis(&chunkTree, y_axis_display, rotation_speed);
-			KDTChunk_rotateVis(chunk, y_axis_display, rotation_speed);
+			KDTChunkTree_rotateLoaded(&chunkTree, y_axis_display, rotation_speed);
+//			KDTChunk_rotateVis(chunk, y_axis_display, rotation_speed);
 			x_axis_move = Vector3RotateByAxisAngle(x_axis_move, y_axis, nrotation_speed);
 			z_axis_move = Vector3RotateByAxisAngle(z_axis_move, y_axis, nrotation_speed);
 			yaw += nrotation_speed;
 		}
 		if (IsKeyDown(KEY_UP) && y_axis_display.z > -0.98f) {
-			KDTChunkTree_rotateVis(&chunkTree, x_axis, nrotation_speed);
-			KDTChunk_rotateVis(chunk, x_axis, nrotation_speed);
+			KDTChunkTree_rotateLoaded(&chunkTree, x_axis, nrotation_speed);
+//			KDTChunk_rotateVis(chunk, x_axis, nrotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, nrotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, nrotation_speed);
 			pitch += rotation_speed;
 		}
 		if (IsKeyDown(KEY_DOWN) && y_axis_display.z < 0.98f) {
-			KDTChunkTree_rotateVis(&chunkTree, x_axis, rotation_speed);
-			KDTChunk_rotateVis(chunk, x_axis, rotation_speed);
+			KDTChunkTree_rotateLoaded(&chunkTree, x_axis, rotation_speed);
+//			KDTChunk_rotateVis(chunk, x_axis, rotation_speed);
 			y_axis_display = Vector3RotateByAxisAngle(y_axis_display, x_axis, rotation_speed);
 			z_axis_display = Vector3RotateByAxisAngle(z_axis_display, x_axis, rotation_speed);
 			pitch += nrotation_speed;
@@ -243,18 +245,18 @@ int main(void) {
 			player_pos = player_origin;
 			player_view_pos = Vector3Add(player_pos, (Vector3){0, 1.6f, 0});
 			player_velocity = (Vector3){0, 0, 0};
-			KDTChunkTree_resetVis(&chunkTree);
+			KDTChunkTree_resetLoaded(&chunkTree);
 //			KDTChunk_resetVis(chunk);
 			dtranslate = Vector3Scale(player_view_pos, -1);
 		}
 
-		KDTChunkTree_translateVis(&chunkTree, dtranslate, 1);
+		KDTChunkTree_translateLoaded(&chunkTree, dtranslate, 1);
 //		KDTChunk_translateVis(chunk, dtranslate, 1);
 
 		BeginDrawing();
 
 			ClearBackground(RAYWHITE);
-			KDTChunkTree_drawVis(&chunkTree, x_offset, y_offset, scale);
+			KDTChunkTree_drawLoaded(&chunkTree, x_offset, y_offset, scale);
 //			KDTChunk_drawVis(chunk, x_offset, y_offset, scale);
 			if (selected) Voxel_forceDraw(selected, x_offset, y_offset, scale);
 

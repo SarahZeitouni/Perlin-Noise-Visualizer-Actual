@@ -1,8 +1,8 @@
 #include "voxel.h"
 #include "kdtchunk.h"
 #include "kdtchunktree.h"
-#include <raymath.h>
 #include <stdint.h>
+#include <raymath.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -14,177 +14,293 @@
 //
 //typedef struct KDTChunkTree {
 //	KDTChunkNode* root;
+//	struct KDTChunkTree* loaded;
 //} KDTChunkTree;
 
-KDTChunkNode* KDTChunkNode_init(KDTChunkNode* node, KDTChunk* chunk, uint8_t axis) {
-	if (!node || !chunk) return nullptr;
+KDTChunkNode* KDTChunkNode_init(KDTChunkNode* node, const Vector3 origin, uint8_t axis) {
+	if (!node) return nullptr;
 
-	node->chunk = chunk;
-	node->axis 	= axis;
+	node->chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
+	KDTChunk_init(node->chunk, origin);
+	node->axis = axis%3;
 	node->children[0] = nullptr;
 	node->children[1] = nullptr;
 
 	return node;
 }
 
+KDTChunkNode* KDTChunkNode_initChunk(KDTChunkNode* node, KDTChunk* chunk, uint8_t axis) {
+	if (!node || !chunk) return nullptr;
+
+	node->chunk = chunk;
+	node->axis = axis%3;
+	node->children[0] = nullptr;
+	node->children[1] = nullptr;
+
+	return node;
+}
+
+void KDTChunkNode_clear(KDTChunkNode* node) {
+	if (!node) return;
+
+	KDTChunkNode_clear(node->children[0]);
+	KDTChunkNode_clear(node->children[1]);
+	free(node->children);
+	KDTChunk_delete(node->chunk);
+}
+
+void KDTChunkNode_delete(KDTChunkNode* node) {
+	if (!node) return;
+
+	KDTChunkNode_clear(node);
+	free(node);
+}
+
 KDTChunkTree* KDTChunkTree_init(KDTChunkTree* tree) {
 	if (!tree) return nullptr;
 
 	tree->root = nullptr;
+	tree->loaded = (KDTChunkTree*)malloc(sizeof(KDTChunkTree));
+	tree->loaded->root = nullptr;
+
 	return tree;
 }
 
-static void KDTChunkTree_deleteHelper(KDTChunkNode* node) {
-	if (!node) return;
+void KDTChunkTree_clear(KDTChunkTree* tree) {
+	if (!tree) return;
 
-	KDTChunkTree_deleteHelper(node->children[0]);
-	KDTChunkTree_deleteHelper(node->children[1]);
-	KDTChunk_delete(node->chunk);
-	free(node);
+	KDTChunkNode_delete(tree->root);
+	KDTChunkTree_deleteLoaded(tree);
 }
+
 void KDTChunkTree_delete(KDTChunkTree* tree) {
 	if (!tree) return;
 
-	KDTChunkTree_deleteHelper(tree->root);
+	KDTChunkTree_clear(tree);
+	free(tree);
 }
 
-KDTChunkNode* KDTChunkTree_insert(KDTChunkTree* tree, KDTChunk* chunk) {
-	if (!tree || !chunk) return nullptr;
+static KDTChunkNode* KDTChunkTree_insertHelper(KDTChunkNode* node, const uint8_t axis, KDTChunk* chunk, KDTChunkNode** writeback) {
+	printf("insRaw.1.0\n");
 
-	if (!tree->root) {
-		tree->root = (KDTChunkNode*)malloc(sizeof(KDTChunkNode));
-		return KDTChunkNode_init(tree->root, chunk, 0);
+	if (!chunk) {
+		if (writeback)
+			*writeback = nullptr;
+		return node;
 	}
 
-	float xyz[3] = { chunk->origin.x, chunk->origin.y, chunk->origin.z };
-	KDTChunkNode* curr = tree->root;
-	while (curr) {
-		float xyzc[3] = { curr->chunk->origin.x, curr->chunk->origin.y, curr->chunk->origin.z };
-		if (xyz[0] == xyzc[0] && xyz[1] == xyzc[1] && xyz[2] == xyzc[2])
-			break;
-		int c = (int)(xyz[curr->axis] >= xyzc[curr->axis]);
-		if (!curr->children[c]) {
-			printf("nchunk\n");
-			curr->children[c] = (KDTChunkNode*)malloc(sizeof(KDTChunkNode));
-			return KDTChunkNode_init(curr->children[c], chunk, (curr->axis+1)%3);
-		}
-		curr = curr->children[c];
+	printf("insRaw.1.1\n");
+
+	if (!node) {
+		node = (KDTChunkNode*)malloc(sizeof(KDTChunkNode));
+		KDTChunkNode_initChunk(node, chunk, axis);
+		if (writeback)
+			*writeback = node;
+		return node;
 	}
-	return nullptr;
-}
 
-KDTChunkNode* KDTChunkTree_insertNew(KDTChunkTree* tree, const Vector3 origin) {
-	if (!tree) return nullptr;
+	printf("insRaw.1.2\n");
 
-	KDTChunk* chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
-	KDTChunk_init(chunk, origin);
+	float chunk_o[3] = { chunk->origin.x, chunk->origin.y, chunk->origin.z };
+	float node_o[3]	= { node->chunk->origin.x, node->chunk->origin.y, node->chunk->origin.z };
 
-	KDTChunkNode* node = KDTChunkTree_insert(tree, chunk);
-	if (node) {
-		free(chunk);
+	if (chunk_o[0] == node_o[0] && chunk_o[1] == node_o[1] && chunk_o[2] == node_o[2]) {
+		if (writeback)
+			*writeback = nullptr;
+		return node;
 	}
+
+	printf("insRaw.1.3\n");
+
+	int c = chunk_o[node->axis] >= node_o[node->axis];
+
+	printf("insRaw.1.4\n");
+
+	node->children[c] = KDTChunkTree_insertHelper(node->children[c], (node->axis+1)%3, chunk, writeback);
+
+	printf("insRaw.1.5\n");
+
 	return node;
 }
-
-KDTChunkNode* KDTChunkTree_search(KDTChunkTree* tree, const Vector3 pos) {
+KDTChunkNode* KDTChunkTree_insertRaw(KDTChunkTree* tree, const Vector3 pos) {
 	if (!tree) return nullptr;
 
-	Vector3 o = KDTChunk_getOrigin(pos);
+	printf("insRaw.0.0\n");
 
-	float xyz[3] = { o.x, o.y, o.z };
-	KDTChunkNode* curr = tree->root;
-	while (curr) {
-		float xyzc[3] = { curr->chunk->origin.x, curr->chunk->origin.y, curr->chunk->origin.z };
-		if (xyz[0] == xyzc[0] && xyz[1] == xyzc[1] && xyz[2] == xyzc[2])
-			return curr;
-		int c = (int)(xyz[curr->axis] >= xyzc[curr->axis]);
-		curr = curr->children[c];
+	KDTChunk* chunk = (KDTChunk*)malloc(sizeof(KDTChunk));
+	KDTChunk_init(chunk, pos);
+
+	printf("insRaw.0.1\n");
+
+	KDTChunkNode* writeback = nullptr;
+
+	tree->root = KDTChunkTree_insertHelper(tree->root, 0, chunk, &writeback);
+
+	printf("insRaw.0.2\n");
+
+	if (!writeback) {
+		free(chunk);
+		chunk = nullptr;
 	}
-	return nullptr;
+
+	if (chunk) {
+		printf("insRaw.0.3\n");
+
+		Vector3 o = chunk->origin;
+
+		chunk->adj[0] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z-1 });
+		chunk->adj[1] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x+1, o.y, o.z });
+		chunk->adj[2] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y, o.z+1 });
+		chunk->adj[3] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x-1, o.y, o.z });
+		chunk->adj[4] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y-1, o.z });
+		chunk->adj[5] = KDTChunkTree_searchRaw_Chunk(tree, (Vector3){ o.x, o.y+1, o.z });
+		if (chunk->adj[0])
+			chunk->adj[0]->adj[2] = chunk;
+		if (chunk->adj[1])
+			chunk->adj[1]->adj[3] = chunk;
+		if (chunk->adj[2])
+			chunk->adj[2]->adj[0] = chunk;
+		if (chunk->adj[3])
+			chunk->adj[3]->adj[1] = chunk;
+		if (chunk->adj[4])
+			chunk->adj[4]->adj[5] = chunk;
+		if (chunk->adj[5])
+			chunk->adj[5]->adj[4] = chunk;
+
+		printf("insRaw.0.4\n");
+	}
+
+	return writeback;
 }
 
-KDTChunk* KDTChunkTree_searchChunk(KDTChunkTree* tree, const Vector3 pos) {
-	KDTChunkNode* node = KDTChunkTree_search(tree, pos);
+static void KDTChunkTree_searchHelper(KDTChunkNode* node, const Vector3 origin, KDTChunkNode** writeback) {
+	if (!node) {
+		if (writeback)
+			*writeback = nullptr;
+		return;
+	}
+
+	float search_o[3] = { origin.x, origin.y, origin.z };
+	float node_o[3] = { node->chunk->origin.x, node->chunk->origin.y, node->chunk->origin.z };
+
+	if (search_o[0] == node_o[0] && search_o[1] == node_o[1] && search_o[2] == node_o[2]) {
+		if (writeback)
+			*writeback = node;
+		return;
+	}
+
+	int c = search_o[node->axis] >= node_o[node->axis];
+	KDTChunkTree_searchHelper(node->children[c], origin, writeback);
+}
+
+KDTChunkNode* KDTChunkTree_searchRaw(KDTChunkTree* tree, const Vector3 pos) {
+	if (!tree) return nullptr;
+
+	KDTChunkNode* writeback = nullptr;
+
+	KDTChunkTree_searchHelper(tree->root, KDTChunk_getOrigin(pos), &writeback);
+
+	return writeback;
+}
+
+KDTChunk* KDTChunkTree_searchRaw_Chunk(KDTChunkTree* tree, const Vector3 pos) {
+	if (!tree) return nullptr;
+
+	KDTChunkNode* node = KDTChunkTree_searchRaw(tree, pos);
 	return node ? node->chunk : nullptr;
 }
 
-static void KDTChunkTree_deleteVisHelper(KDTChunkNode* node) {
-	if (!node) return;
+static void KDTChunkTree_initLoadedHelper(KDTChunkTree* tree, KDTChunkNode* node) {
+	if (!tree || !node) return;
 
-	KDTChunk_deleteVis(node->chunk);
-	KDTChunkTree_deleteVisHelper(node->children[0]);
-	KDTChunkTree_deleteVisHelper(node->children[1]);
-}
-void KDTChunkTree_deleteVis(KDTChunkTree* tree) {
-	if (!tree) return;
-
-	KDTChunkTree_deleteVisHelper(tree->root);
-}
-
-static void KDTChunkTree_initVisHelper(KDTChunkNode* node) {
-	if (!node) return;
-
-	KDTChunkTree_initVisHelper(node->children[0]);
-	printf("c0\n");
-	KDTChunkTree_initVisHelper(node->children[1]);
-	printf("c1\n");
+	KDTChunkTree_insertLoaded(tree, node->chunk);
 	KDTChunk_initVis(node->chunk);
-	printf("vis\n");
 }
-void KDTChunkTree_initVis(KDTChunkTree* tree) {
+void KDTChunkTree_initLoaded(KDTChunkTree* tree) {
 	if (!tree) return;
 
-	KDTChunkTree_initVisHelper(tree->root);
+	KDTChunkTree_initLoadedHelper(tree, tree->root);
 }
 
-static void KDTChunkTree_resetVisHelper(KDTChunkNode* node) {
+static void KDTChunkTree_clearLoadedHelper(KDTChunkNode* node) {
 	if (!node) return;
 
-	KDTChunkTree_resetVisHelper(node->children[0]);
-	KDTChunkTree_resetVisHelper(node->children[1]);
-	KDTChunk_resetVis(node->chunk);
+	KDTChunkTree_clearLoadedHelper(node->children[0]);
+	KDTChunkTree_clearLoadedHelper(node->children[1]);
+	free(node->children);
+	free(node);
 }
-void KDTChunkTree_resetVis(KDTChunkTree* tree) {
+void KDTChunkTree_clearLoaded(KDTChunkTree* tree) {
 	if (!tree) return;
 
-	KDTChunkTree_resetVisHelper(tree->root);
+	KDTChunkTree_clearLoadedHelper(tree->loaded->root);
 }
 
-static void KDTChunkTree_rotateVisHelper(KDTChunkNode* node, const Vector3 axis, const float rotation_speed) {
+void KDTChunkTree_deleteLoaded(KDTChunkTree* tree) {
+	if (!tree) return;
+
+	KDTChunkTree_clearLoaded(tree);
+	free(tree->loaded);
+}
+
+KDTChunkNode* KDTChunkTree_insertLoaded(KDTChunkTree* tree, KDTChunk* chunk) {
+	if (!tree || !chunk) return nullptr;
+
+	KDTChunkNode* writeback = nullptr;
+
+	tree->loaded->root = KDTChunkTree_insertHelper(tree->loaded->root, 0, chunk, &writeback);
+
+	return writeback;
+}
+
+static void KDTChunkTree_rotateLoadedHelper(KDTChunkNode* node, const Vector3 axis, const float rotation_speed) {
 	if (!node) return;
 
-	KDTChunkTree_rotateVisHelper(node->children[0], axis, rotation_speed);
-	KDTChunkTree_rotateVisHelper(node->children[1], axis, rotation_speed);
+	KDTChunkTree_rotateLoadedHelper(node->children[0], axis, rotation_speed);
+	KDTChunkTree_rotateLoadedHelper(node->children[1], axis, rotation_speed);
 	KDTChunk_rotateVis(node->chunk, axis, rotation_speed);
 }
-void KDTChunkTree_rotateVis(KDTChunkTree* tree, const Vector3 axis, const float rotation_speed) {
+void KDTChunkTree_rotateLoaded(KDTChunkTree* tree, const Vector3 axis, const float rotation_speed) {
 	if (!tree) return;
 
-	KDTChunkTree_rotateVisHelper(tree->root, axis, rotation_speed);
+	KDTChunkTree_rotateLoadedHelper(tree->loaded->root, axis, rotation_speed);
 }
 
-static void KDTChunkTree_translateVisHelper(KDTChunkNode* node, const Vector3 axis, const float move_speed) {
+static void KDTChunkTree_translateLoadedHelper(KDTChunkNode* node, const Vector3 axis, const float move_speed) {
 	if (!node) return;
 
-	KDTChunkTree_translateVisHelper(node->children[0], axis, move_speed);
-	KDTChunkTree_translateVisHelper(node->children[1], axis, move_speed);
+	KDTChunkTree_translateLoadedHelper(node->children[0], axis, move_speed);
+	KDTChunkTree_translateLoadedHelper(node->children[1], axis, move_speed);
 	KDTChunk_translateVis(node->chunk, axis, move_speed);
 }
-void KDTChunkTree_translateVis(KDTChunkTree* tree, const Vector3 axis, const float move_speed) {
+void KDTChunkTree_translateLoaded(KDTChunkTree* tree, const Vector3 axis, const float move_speed) {
 	if (!tree) return;
 
-	KDTChunkTree_translateVisHelper(tree->root, axis, move_speed);
+	KDTChunkTree_translateLoadedHelper(tree->loaded->root, axis, move_speed);
 }
 
-static void KDTChunkTree_drawVisHelper(KDTChunkNode* node, float x_offset, float y_offset, float scale) {
+static void KDTChunkTree_resetLoadedHelper(KDTChunkNode* node) {
 	if (!node) return;
 
-	KDTChunkTree_drawVisHelper(node->children[0], x_offset, y_offset, scale);
-	KDTChunkTree_drawVisHelper(node->children[1], x_offset, y_offset, scale);
-	KDTChunk_drawVis(node->chunk, x_offset, y_offset, scale);
+	KDTChunkTree_resetLoadedHelper(node->children[0]);
+	KDTChunkTree_resetLoadedHelper(node->children[1]);
+	KDTChunk_resetVis(node->chunk);
 }
-void KDTChunkTree_drawVis(KDTChunkTree* tree, float x_offset, float y_offset, float scale) {
+void KDTChunkTree_resetLoaded(KDTChunkTree* tree) {
 	if (!tree) return;
 
-	KDTChunkTree_drawVisHelper(tree->root, x_offset, y_offset, scale);
+	KDTChunkTree_resetLoadedHelper(tree->loaded->root);
+}
+
+static void KDTChunkTree_drawLoadedHelper(KDTChunkNode* node, float x_offset, float y_offset, float scale) {
+	if (!node) return;
+
+	KDTChunkTree_drawLoadedHelper(node->children[0], x_offset, y_offset, scale);
+	KDTChunkTree_drawLoadedHelper(node->children[1], x_offset, y_offset, scale);
+	KDTChunk_drawVis(node->chunk, x_offset, y_offset, scale);
+}
+void KDTChunkTree_drawLoaded(KDTChunkTree* tree, float x_offset, float y_offset, float scale) {
+	if (!tree) return;
+
+	KDTChunkTree_drawLoadedHelper(tree->loaded->root, x_offset, y_offset, scale);
 }

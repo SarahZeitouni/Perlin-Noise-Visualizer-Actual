@@ -15,6 +15,7 @@ typedef struct KDTChunk {
 	Vector3		origin;
 	KDTVoxelNode*	root;
 	struct KDTChunk* vis;
+	struct KDTChunk* adj[6];
 } KDTChunk;
 
 KDTVoxelNode* KDTVoxelNode_init(KDTVoxelNode* node, const Vector3 origin, const uint8_t axis);
