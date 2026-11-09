@@ -47,7 +47,7 @@ void State::Opened(int* seed, float* scale2){
             worldGenerated = false;
         }
         if (three_d_initialized) {
-            PRChunkTree_delete(&chunkTree);
+			PRChunkTree_clear(&chunkTree):
             three_d_initialized = false;
         }
         player.seed = seedIn;
@@ -202,7 +202,7 @@ void State::two_d(){
 
         worldGenerated = true;
 
-//		free(pixels);
+		free(pixels);
     }
     DrawTexture(worldTexture, 0, 0, WHITE);
 }
@@ -258,7 +258,7 @@ void State::PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, in
 			}
 		}
 	}
-//	free(pixels);
+	free(pixels);
 }
 
 int State::TextBoxGenerator(int x, int y, int id) {
