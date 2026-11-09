@@ -4,6 +4,7 @@
 #include <raymath.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 //typedef struct KDTVoxelNode {
 //	Voxel* 	voxel;
@@ -191,15 +192,14 @@ Voxel* KDTChunk_searchLocal_Voxel(KDTChunk* chunk, const Vector3 origin) {
 static void KDTChunk_initVisHelper(KDTChunk* chunk, KDTVoxelNode* node) {
 	if (!chunk || !node) return;
 
-	if (Voxel_isVisible(node->voxel))
-		KDTChunk_insertVis(chunk, node->voxel);
+	KDTChunk_insertVis(chunk, node->voxel);
 	KDTChunk_initVisHelper(chunk, node->children[0]);
 	KDTChunk_initVisHelper(chunk, node->children[1]);
 }
 void KDTChunk_initVis(KDTChunk* chunk) {
 	if (!chunk) return;
 
-	KDTChunk_initVisHelper(chunk, chunk->vis->root);
+	KDTChunk_initVisHelper(chunk, chunk->root);
 }
 
 void KDTChunk_clearVis(KDTChunk* chunk) {}
@@ -212,6 +212,8 @@ KDTVoxelNode* KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel) {
 
 	chunk->vis->root = KDTChunk_insertHelper(chunk->vis->root, 0, voxel, &writeback);
 
+	if (!writeback)
+		printf("KDTChunk_insertVis.1.0\n");
 	return writeback;
 }
 
