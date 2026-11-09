@@ -43,8 +43,6 @@ Vector2 Voxel_flat(const Vector3 pos, float x_offset, float y_offset, float scal
 Voxel* Voxel_init(Voxel* voxel, const Vector3 origin) {
 	if (!voxel) return nullptr;
 
-	voxel->alive 	= 1;
-	voxel->visible	= 0;
 	voxel->origin 	= Voxel_getOrigin(origin);
 
 	float x = origin.x;
