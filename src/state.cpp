@@ -4,6 +4,7 @@
 #include "prchunk.h"
 #include "prchunktree.h"
 #include "perlinNoiseGen.h"
+#include <cstdlib>
 
 #include <string>
 #include <vector>
@@ -13,8 +14,8 @@
 #define PERLIN_SCALE	0.25
 
 State::State(){
-    x_offset = player.screenWidth  / 2;
-    y_offset = player.screenHeight / 2;
+    x_offset = player.screenWidth  / 2 + 300/2;
+    y_offset = player.screenHeight / 2 + 50/2;
     scale = (float)player.screenHeight * 0.4f;
 
     camera.position   = (Vector3){0.0f, 5.0f, 10.0f};
@@ -52,12 +53,12 @@ void State::Opened(int* seed, float* scale2){
         player.seed = seedIn;
     }
 
-    int scaleIn = TextBoxGenerator(50, 220, 1);
-
-    if (scaleIn != -1 && scaleIn != player.scale2) {
-        numbers.push_back(scaleIn);
-        *scale2 = scaleIn;
-    }
+//    int scaleIn = TextBoxGenerator(50, 220, 1);
+//
+//    if (scaleIn != -1 && scaleIn != player.scale2) {
+//        numbers.push_back(scaleIn);
+//        *scale2 = scaleIn;
+//    }
 
     if (is3D && (*seed != 0)){
         currentState = GameState::THREE_D;
@@ -79,7 +80,7 @@ void State::three_d(){
         player.player_view_pos.z
     } + player.y_axis_display;
 
-    BeginMode3D(camera);
+//    BeginMode3D(camera);
 
     if (!three_d_initialized){
         PRChunkTree_init(&chunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
@@ -164,6 +165,16 @@ void State::three_d(){
         }
     }
 
+	if (IsKeyDown(KEY_W)) {
+        dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.move_speed));
+        player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.nmove_speed));
+        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
+        while(PRChunk_searchRaw(chunk, player.player_pos) || PRChunk_searchRaw(chunk, player.player_view_pos)) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.nmove_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.move_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
+        }
+    }
 
     if (IsKeyDown(KEY_S)) {
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.nmove_speed));
@@ -176,9 +187,10 @@ void State::three_d(){
         }
     }
 
+	PRChunkTree_translateLoaded(&chunkTree, dtranslate, 1);
     PRChunkTree_drawLoaded(&chunkTree, x_offset, y_offset, scale);
     if (selectedVoxel) Voxel_forceDraw(selectedVoxel, x_offset, y_offset, scale);
-    EndMode3D();
+//    EndMode3D();
 }
 
 void State::two_d(){
@@ -188,8 +200,9 @@ void State::two_d(){
 
         worldTexture = show_sample(&smp);
 
-        free(pixels);
         worldGenerated = true;
+
+//		free(pixels);
     }
     DrawTexture(worldTexture, 0, 0, WHITE);
 }
@@ -245,7 +258,7 @@ void State::PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, in
 			}
 		}
 	}
-	free(pixels);
+//	free(pixels);
 }
 
 int State::TextBoxGenerator(int x, int y, int id) {

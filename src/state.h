@@ -6,6 +6,9 @@
 #include "perlinNoiseGen.h"
 #include <vector>
 
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
+
 enum class GameState{
     SCRNBLANK,
     THREE_D,
