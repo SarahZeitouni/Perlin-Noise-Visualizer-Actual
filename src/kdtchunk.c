@@ -117,6 +117,21 @@ KDTVoxelNode* KDTChunk_insertRaw(KDTChunk* chunk, const Vector3 pos) {
 		voxel = nullptr;
 	}
 
+	if (voxel) {
+		Vector3 o = voxel->origin;
+		Vector3 k[6] = {
+			(Vector3){ o.x, o.y, o.z-1 }, (Vector3){ o.x+1, o.y, o.z }, (Vector3){ o.x, o.y, o.z+1 },
+			(Vector3){ o.x-1, o.y, o.z }, (Vector3){ o.x, o.y-1, o.z }, (Vector3){ o.x, o.y+1, o.z }
+		};
+		int e[6] = { 2, 3, 0, 1, 5, 4 };
+
+		for (int i = 0; i < 6; i ++) {
+			voxel->adj[i] = KDTChunk_searchRaw_Voxel(chunk, k[i]);
+			if (voxel->adj[i])
+				voxel->adj[i]->adj[m[i]] = voxel;
+		}
+	}
+
 	return writeback;
 }
 
@@ -200,10 +215,57 @@ KDTVoxelNode* KDTChunk_insertVis(KDTChunk* chunk, Voxel* voxel) {
 	return writeback;
 }
 
-void KDTChunk_rotateVis(KDTChunk* chunk, const Vector3 axis, const float rotation_speed) {}
-void KDTChunk_translateVis(KDTChunk* chunk, const Vector3 axis, const float move_speed) {}
-void KDTChunk_resetVis(KDTChunk* chunk) {}
-void KDTChunk_drawVis(KDTChunk* chunk, float x_offset, float y_offset, float scale) {}
+static void KDTChunk_rotateVisHelper(KDTVoxelNode* node, const Vector3 axis, const float rotation_speed) {
+	if (!node) return;
+
+	Voxel_rotateDisplay(node->voxel, axis, rotation_speed);
+	KDTChunk_rotateVisHelper(node->children[0], axis, rotation_speed);
+	KDTChunk_rotateVisHelper(node->children[1], axis, rotation_speed);
+}
+void KDTChunk_rotateVis(KDTChunk* chunk, const Vector3 axis, const float rotation_speed) {
+	if (!chunk) return;
+
+	KDTChunk_rotateVisHelper(chunk->vis->root, axis, rotation_speed);
+}
+
+static void KDTChunk_translateVisHelper(KDTVoxelNode* node, const Vector3 axis, const float move_speed) {
+	if (!node) return;
+
+	Voxel_translateDisplay(node->voxel, axis, move_speed);
+	KDTChunk_translateVisHelper(node->children[0], axis, move_speed);
+	KDTChunk_translateVisHelper(node->children[1], axis, move_speed);
+}
+void KDTChunk_translateVis(KDTChunk* chunk, const Vector3 axis, const float move_speed) {
+	if (!chunk) return;
+
+	KDTChunk_translateVisHelper(chunk->vis->root, axis, move_speed);
+}
+
+static void KDTChunk_resetVisHelper(KDTVoxelNode* node) {
+	if (!node) return;
+
+	Voxel_resetDisplay(node->voxel);
+	KDTChunk_resetVisHelper(node->children[0]);
+	KDTChunk_resetVisHelper(node->children[1]);
+}
+void KDTChunk_resetVis(KDTChunk* chunk) {
+	if (!chunk) return;
+
+	KDTChunk_resetVisHelper(chunk->vis->root);
+}
+
+static void KDTChunk_drawVisHelper(KDTVoxelNode* node, float x_offset, float y_offset, float scale) {
+	if (!node) return;
+
+	Voxel_draw(node->voxel, x_offset, y_offset, scale);
+	KDTChunk_drawVisHelper(node->children[0], x_offset, y_offset, scale);
+	KDTChunk_drawVisHelper(node->children[1], x_offset, y_offset, scale);
+}
+void KDTChunk_drawVis(KDTChunk* chunk, float x_offset, float y_offset, float scale) {
+	if (!chunk) return;
+
+	KDTChunk_drawVisHelper(chunk->vis->root, x_offset, y_offset, scale);
+}
 
 Vector3 KDTChunk_getOrigin(const Vector3 pos) {
 	Vector3 o = Voxel_getOrigin(pos);
