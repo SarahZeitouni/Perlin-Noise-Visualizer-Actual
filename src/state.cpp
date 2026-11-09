@@ -17,12 +17,6 @@ State::State(){
     x_offset = player.screenWidth  / 2 + 300/2;
     y_offset = player.screenHeight / 2 + 50/2;
     scale = (float)player.screenHeight * 0.4f;
-
-    camera.position   = (Vector3){0.0f, 5.0f, 10.0f};
-	camera.target     = (Vector3){0.0f, 5.0f, 0.0f};
-	camera.up         = (Vector3){0.0f, 1.0f, 0.0f};
-	camera.fovy       = 45.0f;
-	camera.projection = CAMERA_PERSPECTIVE;
 }
 
 void State::Opened(int* seed, float* scale2){
@@ -31,7 +25,7 @@ void State::Opened(int* seed, float* scale2){
     DrawLineEx({0, 50}, {1920, 50}, 5.0f, BLACK);
 
     DrawText("Seed", 100, 85, 30, BLACK);
-    DrawText("Scale", 100, 185, 30, BLACK);
+//    DrawText("Scale", 100, 185, 30, BLACK);
 
     bool is2D = CheckBoxGenerator(80, 320,0);
     bool is3D = CheckBoxGenerator(180, 320,1);
@@ -47,7 +41,8 @@ void State::Opened(int* seed, float* scale2){
             worldGenerated = false;
         }
         if (three_d_initialized) {
-			PRChunkTree_clear(&chunkTree):
+			PRChunkTree_clear(&chunkTree);
+			PRChunkTree_init(&chunkTree, (Vector3){ 0, 0, 0 }, (Vector3){400, 0, 400});
             three_d_initialized = false;
         }
         player.seed = seedIn;
@@ -72,16 +67,6 @@ void State::Opened(int* seed, float* scale2){
 }
 
 void State::three_d(){
-
-    camera.position = player.player_view_pos;
-    camera.target   = (Vector3){
-        player.player_view_pos.x,
-        player.player_view_pos.y,
-        player.player_view_pos.z
-    } + player.y_axis_display;
-
-//    BeginMode3D(camera);
-
     if (!three_d_initialized){
         PRChunkTree_init(&chunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
 
@@ -89,32 +74,13 @@ void State::three_d(){
 
         PRChunkTree_initLoaded(&chunkTree);
         PRChunkTree_translateLoaded(&chunkTree, player.player_view_pos, -1);
+		PRChunkTree_rotateLoaded(&chunkTree, (Vector3){ 0, 1, 0 }, PI);
 
         three_d_initialized = true;
     }
 
     PRChunkNode* node = PRChunkTree_searchRaw(&chunkTree, player.player_pos);
     PRChunk* chunk = node ? node->chunk : nullptr;
-
-	SetTargetFPS(60);
-
-	//HideCursor();
-
-    // load new chunks (got rid of block, fix)
-
-//		for (int i = -1; i < 2; i ++) {
-//			for (int j = -1; j < 2; j ++) {
-//				Vector3 o = Vector3Add(chunk->origin, (Vector3){16*i, 0, 16*j});
-//				if (!PRChunkTree_search(&chunkTree, o)) {
-//					ArrChunk* tmp = PRChunkTree_insertNew(&chunkTree, o)->chunk;
-//					ArrChunk_block(tmp, (Vector3){0, 0, 0}, (Vector3){15, 9, 15});
-//					ArrChunk_setVis(tmp);
-//					ArrChunk_translateVis(tmp, player_view_pos, -1);
-//					ArrChunk_rotateVis(tmp, x_axis, -1*pitch);
-//					ArrChunk_rotateVis(tmp, y_axis_display, -1*yaw);
-//				}
-//			}
-//		}
 
     if (IsKeyDown(KEY_LEFT)) {
         PRChunkTree_rotateLoaded(&chunkTree, player.y_axis_display, player.nrotation_speed);
@@ -190,7 +156,6 @@ void State::three_d(){
 	PRChunkTree_translateLoaded(&chunkTree, dtranslate, 1);
     PRChunkTree_drawLoaded(&chunkTree, x_offset, y_offset, scale);
     if (selectedVoxel) Voxel_forceDraw(selectedVoxel, x_offset, y_offset, scale);
-//    EndMode3D();
 }
 
 void State::two_d(){

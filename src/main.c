@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-
-
 int main(void) {
 
 	SetTraceLogLevel(LOG_NONE);

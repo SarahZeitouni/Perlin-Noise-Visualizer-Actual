@@ -1,4 +1,5 @@
 #pragma once
+
 #include "player.h"
 #include "voxel.h"
 #include "prchunk.h"
@@ -29,7 +30,6 @@ public:
     //3d init
     Player player;
     PRChunkTree chunkTree;
-    Camera3D camera;
 
 
     bool three_d_initialized = false;
