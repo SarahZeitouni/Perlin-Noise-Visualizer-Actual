@@ -103,42 +103,40 @@ void State::Opened(int* seed, float* scale2){
             currentState = GameState::THREE_D;
         }
     }
+    
 
     else if (is2D && (*seed != 0)){
         currentState = GameState::TWO_D;
         is3D = false;
     }
 }
-
 void State::three_d(){
+    if (!isPR && !isKDT) return; 
+    static int builtMode = 0;
+    int mode = isPR ? 1 : 2;
+    if (mode != builtMode) {
+        three_d_initialized = false;
+        builtMode = mode;
+    }
+
     if (!three_d_initialized){
-        KDTChunkTree_clear(&kdtchunkTree);
+        selectedVoxel = nullptr;
         PRChunkTree_clear(&prchunkTree);
+        KDTChunkTree_clear(&kdtchunkTree);
+        PRChunkTree_init(&prchunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
+        KDTChunkTree_init(&kdtchunkTree);
+        reset_player();
 
-        if (isPR) PRChunkTree_init(&prchunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
-        if (isKDT) KDTChunkTree_init(&kdtchunkTree);
-
-		reset_player();
-
-//		player.y_axis_display = player.y_axis;
-//		player.z_axis_display = player.z_axis;
-//		player.x_axis_move = player.x_axis;
-//		player.z_axis_move = player.z_axis;
-//		player.yaw = 0.0f;
-//		player.player_pos = player.player_origin;
-//		player.player_view_pos = Vector3Add(player.player_pos, (Vector3){0, 1.6f, 0});
-//		player.player_velocity = (Vector3){0, 0, 0};
-
-        if (isPR) PRChunkTree_perlin(&prchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed); //err
-        if (isKDT) KDTChunkTree_Perlin(&kdtchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed);
-
-
-        if (isPR) PRChunkTree_initLoaded(&prchunkTree);
-        if (isPR) PRChunkTree_translateLoaded(&prchunkTree, player.player_view_pos, -1);
-
-        if (isKDT) KDTChunkTree_initLoaded(&kdtchunkTree);
-	    if (isKDT) KDTChunkTree_translateLoaded(&kdtchunkTree, player.player_view_pos, -1);
-
+        if (isPR) {
+            PRChunkTree_perlin(&prchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed);
+            PRChunkTree_initLoaded(&prchunkTree);
+            PRChunkTree_translateLoaded(&prchunkTree, player.player_view_pos, -1);
+        }
+        if (isKDT) {
+            KDTChunkTree_Perlin(&kdtchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed);
+            KDTChunkTree_initLoaded(&kdtchunkTree);
+            KDTChunkTree_translateLoaded(&kdtchunkTree, player.player_view_pos, -1);
+        }
         three_d_initialized = true;
     }
 
@@ -486,23 +484,18 @@ int State::TextBoxGenerator(int x, int y, int id) {
 }
 
 int State::CheckBoxGenerator(int x, int y, int id) {
-
-    static int selected = -1;
+    static int selected[2] = {-1, -1};
+    int g = (id >= 2) ? 1 : 0;
 
     Rectangle box = {(float)x, (float)y, 25, 25};
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
         CheckCollisionPointRec(GetMousePosition(), box)) {
-        if (selected == id) {
-            selected = -1;
-        }
-        else {
-            selected = id;
-        }
+        selected[g] = (selected[g] == id) ? -1 : id;
     }
     DrawRectangleLinesEx(box, 2, BLACK);
-    if (selected == id) {
+    if (selected[g] == id) {
         DrawLine(x + 5, y + 12, x + 10, y + 18, BLACK);
         DrawLine(x + 10, y + 18, x + 21, y + 5, BLACK);
     }
-    return selected == id;
+    return selected[g] == id;
 }

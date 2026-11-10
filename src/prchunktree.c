@@ -60,7 +60,6 @@ void PRChunkNode_clear(PRChunkNode* node) {
 		}
 		free(node->children);
 	}
-	free(node->chunk);
 }
 
 void PRChunkNode_delete(PRChunkNode* node) {
@@ -88,6 +87,7 @@ void PRChunkTree_clear(PRChunkTree* tree) {
 	if (!tree) return;
 
 	PRChunkNode_delete(tree->root);
+	tree->root = nullptr;
 	PRChunkTree_deleteLoaded(tree);
 }
 
@@ -274,18 +274,17 @@ static void PRChunkTree_clearLoadedHelper(PRChunkNode* node) {
 	free(node);
 }
 void PRChunkTree_clearLoaded(PRChunkTree* tree) {
-	if (!tree) return;
-
+	if (!tree || !tree->loaded) return;
 	PRChunkTree_clearLoadedHelper(tree->loaded->root);
+	tree->loaded->root = nullptr;
 }
 
 void PRChunkTree_deleteLoaded(PRChunkTree* tree) {
-	if (!tree) return;
-
+	if (!tree || !tree->loaded) return;
 	PRChunkTree_clearLoaded(tree);
 	free(tree->loaded);
+	tree->loaded = nullptr;
 }
-
 PRChunkNode* PRChunkTree_insertLoaded(PRChunkTree* tree, PRChunk* chunk) {
 	if (!tree || !chunk) return nullptr;
 

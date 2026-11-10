@@ -44,10 +44,11 @@ KDTVoxelNode* KDTVoxelNode_initVoxel(KDTVoxelNode* node, Voxel* voxel, const uin
 void KDTVoxelNode_clear(KDTVoxelNode* node) {
 	if (!node) return;
 
-	KDTVoxelNode_clear(node->children[0]);
-	KDTVoxelNode_clear(node->children[1]);
-	free(node->children);
+	KDTVoxelNode_delete(node->children[0]);
+	KDTVoxelNode_delete(node->children[1]);
+	node->children[0] = node->children[1] = nullptr;
 	free(node->voxel);
+	node->voxel = nullptr;
 }
 void KDTVoxelNode_delete(KDTVoxelNode* node) {
 	if (!node) return;
@@ -223,9 +224,10 @@ static void KDTChunk_clearVisHelper(KDTVoxelNode* node) {
 }
 void KDTChunk_clearVis(KDTChunk* chunk) {
 	if (!chunk) return;
-
 	KDTChunk_clearVisHelper(chunk->vis->root);
+	chunk->vis->root = nullptr;
 }
+
 
 void KDTChunk_deleteVis(KDTChunk* chunk) {
 	if (!chunk) return;

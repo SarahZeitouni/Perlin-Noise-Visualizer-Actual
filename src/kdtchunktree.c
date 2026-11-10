@@ -45,7 +45,6 @@ void KDTChunkNode_clear(KDTChunkNode* node) {
 
 	KDTChunkNode_delete(node->children[0]);
 	KDTChunkNode_delete(node->children[1]);
-	free(node->children);
 	KDTChunk_delete(node->chunk);
 }
 
@@ -70,6 +69,7 @@ void KDTChunkTree_clear(KDTChunkTree* tree) {
 	if (!tree) return;
 
 	KDTChunkNode_delete(tree->root);
+	tree->root = nullptr;
 	KDTChunkTree_deleteLoaded(tree);
 }
 
@@ -206,20 +206,21 @@ static void KDTChunkTree_clearLoadedHelper(KDTChunkNode* node) {
 
 	KDTChunkTree_clearLoadedHelper(node->children[0]);
 	KDTChunkTree_clearLoadedHelper(node->children[1]);
-	free(node->children);
 	free(node);
 }
 void KDTChunkTree_clearLoaded(KDTChunkTree* tree) {
-	if (!tree) return;
+	if (!tree || !tree->loaded) return;
 
 	KDTChunkTree_clearLoadedHelper(tree->loaded->root);
+	tree->loaded->root = nullptr;
 }
 
 void KDTChunkTree_deleteLoaded(KDTChunkTree* tree) {
-	if (!tree) return;
+	if (!tree || !tree->loaded) return;
 
 	KDTChunkTree_clearLoaded(tree);
 	free(tree->loaded);
+	tree->loaded = nullptr;
 }
 
 KDTChunkNode* KDTChunkTree_insertLoaded(KDTChunkTree* tree, KDTChunk* chunk) {
