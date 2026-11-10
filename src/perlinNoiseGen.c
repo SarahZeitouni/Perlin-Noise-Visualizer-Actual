@@ -15,6 +15,9 @@ static vector2 randomGradient(int ix, int iy, int seed){
     //   i did not write this code organically)
 
     seed = seed % 10;
+    if (seed == 0){
+        seed += 4;
+    }
 
     const unsigned w  = 8 * sizeof(unsigned);
     const unsigned s  = w/2;
@@ -87,20 +90,33 @@ uint8_t* Perlin_generate(const int width, const int height, int seed) {
 
 	uint8_t* pixels = (uint8_t*)calloc(width*height*4, sizeof(uint8_t));
 
+    if (pixels == nullptr) return nullptr;
+
 	const int GRID_SIZE = 400;
+    const int OCTAVES = 12;
+
+    float frequencies[OCTAVES];
+    float amplitudes[OCTAVES];
+
+    float freq = 1;
+    float amp = 1;
+
+    for (int i = 0; i < OCTAVES; i++) {
+        frequencies[i] = freq / GRID_SIZE;
+        amplitudes[i] = amp;
+
+        freq *= 2.0f;
+        amp *= 0.5f;
+    }
+
 
 	for (int x = 0; x < width; x++){
 		for (int y = 0; y < height; y++){
 			float val = 0;
-			float freq = 1;
-			float amp = 1;
 
 			//layering noise on top of each other 12 times
-			for (int i = 0; i < 12; i++){
-				val += perlin(x * (float)freq/GRID_SIZE, y * (float)freq/GRID_SIZE, seed) * amp;
-
-				freq *=2;
-				amp /=2;
+			for (int i = 0; i < OCTAVES; i++){
+				val += perlin(x * frequencies[i], y * frequencies[i], seed) * amplitudes[i];
 			}
 			val *= 1.2;
 
