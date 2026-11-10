@@ -9,6 +9,14 @@ class Player{
     const Vector3 y_axis = { 0.0f, 1.0f, 0.0f };
     const Vector3 z_axis = { 0.0f, 0.0f, 1.0f };
 
+    const Vector3 check_floor[5] = {
+		(Vector3){ 0, 0, 0 },
+		(Vector3){ 0, 0, -0.1 },
+		(Vector3){ 0.1, 0, 0 },
+		(Vector3){ 0, 0, 0.1 },
+		(Vector3){ -0.1, 0, 0 }
+	};
+
     Vector3 x_axis_move = x_axis;
     Vector3 z_axis_move = z_axis;
     Vector3 y_axis_display = y_axis;
@@ -28,8 +36,8 @@ class Player{
 
     bool isTouchingFloor = false;
 
-    float rotation_speed = 0.05f;
-    float nrotation_speed = -0.05f;
+    float rotation_speed = 0.1f;
+    float nrotation_speed = -0.1f;
 
     float move_speed = 0.1f;
     float nmove_speed = -1 * move_speed;

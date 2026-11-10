@@ -1,9 +1,11 @@
 #include "player.h"
 #include "state.h"
 #include "voxel.h"
-#include "arrchunk.h"
-#include "chunk2dtree.h"
+#include "prchunk.h"
+#include "prchunktree.h"
 #include "perlinNoiseGen.h"
+#include <raylib.h>
+#include <cstdlib>
 
 #include <string>
 #include <vector>
@@ -12,16 +14,32 @@
 #define PERLIN_HEIGHT 	4
 #define PERLIN_SCALE	0.25
 
+static const Vector3 check_floor[5] = {
+	(Vector3){ 0, 0, 0 },
+	(Vector3){ 0, 0, -0.1 },
+	(Vector3){ 0.1, 0, 0 },
+	(Vector3){ 0, 0, 0.1 },
+	(Vector3){ -0.1, 0, 0 }
+};
+
 State::State(){
-    x_offset = player.screenWidth  / 2;
-    y_offset = player.screenHeight / 2;
+    x_offset = player.screenWidth  / 2 + 300/2;
+    y_offset = player.screenHeight / 2 + 50/2;
     scale = (float)player.screenHeight * 0.4f;
 
-    camera.position   = (Vector3){0.0f, 5.0f, 10.0f};
-	camera.target     = (Vector3){0.0f, 5.0f, 0.0f};
-	camera.up         = (Vector3){0.0f, 1.0f, 0.0f};
-	camera.fovy       = 45.0f;
-	camera.projection = CAMERA_PERSPECTIVE;
+    PRChunkTree_init(&prchunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
+    KDTChunkTree_init(&kdtchunkTree);
+}
+
+void State::reset_player() {
+	player.y_axis_display = player.y_axis;
+	player.z_axis_display = player.z_axis;
+	player.x_axis_move = player.x_axis;
+	player.z_axis_move = player.z_axis;
+	player.yaw = 0.0f;
+	player.player_pos = player.player_origin;
+	player.player_view_pos = Vector3Add(player.player_pos, (Vector3){0, 1.6f, 0});
+	player.player_velocity = (Vector3){0, 0, 0};
 }
 
 void State::Opened(int* seed, float* scale2){
@@ -30,7 +48,7 @@ void State::Opened(int* seed, float* scale2){
     DrawLineEx({0, 50}, {1920, 50}, 5.0f, BLACK);
 
     DrawText("Seed", 100, 85, 30, BLACK);
-    DrawText("Scale", 100, 185, 30, BLACK);
+//    DrawText("Scale", 100, 185, 30, BLACK);
 
     bool is2D = CheckBoxGenerator(80, 320,0);
     bool is3D = CheckBoxGenerator(180, 320,1);
@@ -46,29 +64,44 @@ void State::Opened(int* seed, float* scale2){
             worldGenerated = false;
         }
         if (three_d_initialized) {
-            ChunkKDT_delete(&chunkTree);
+			PRChunkTree_clear(&prchunkTree);
+			PRChunkTree_init(&prchunkTree, (Vector3){ 0, 0, 0 }, (Vector3){400, 0, 400});
+			reset_player();
+//			player.y_axis_display = player.y_axis;
+//			player.z_axis_display = player.z_axis;
+//			player.x_axis_move = player.x_axis;
+//			player.z_axis_move = player.z_axis;
+//			player.yaw = 0.0f;
+//			player.player_pos = player.player_origin;
+//			player.player_view_pos = Vector3Add(player.player_pos, (Vector3){0, 1.6f, 0});
+//			player.player_velocity = (Vector3){0, 0, 0};
             three_d_initialized = false;
         }
         player.seed = seedIn;
     }
 
-    int scaleIn = TextBoxGenerator(50, 220, 1);
-
-    if (scaleIn != -1 && scaleIn != player.scale2) {
-        numbers.push_back(scaleIn);
-        *scale2 = scaleIn;
-    }
-
-
-    
-    DrawText("Press ENTER to \nupdate seed for \n2D (or 3D) noise!", 60, 400, 15, BLACK);
-    DrawText("Scale to change mapping \nfor 3D noise!", 60, 500, 15, BLACK);
-
-    
+//    int scaleIn = TextBoxGenerator(50, 220, 1);
+//
+//    if (scaleIn != -1 && scaleIn != player.scale2) {
+//        numbers.push_back(scaleIn);
+//        *scale2 = scaleIn;
+//    }
 
     if (is3D && (*seed != 0)){
-        currentState = GameState::THREE_D;
         is2D = false;
+        isPR = CheckBoxGenerator(180, 400, 3);
+        DrawText("Point Region Tree", 80, 407, 10, BLACK);
+        isKDT = CheckBoxGenerator(180, 450, 2);
+        DrawText("k-D Tree", 105, 455, 10, BLACK);
+
+        if (isKDT) {
+            isPR = false;
+            currentState = GameState::THREE_D;
+        } 
+        if (isPR) {
+            isKDT = false;
+            currentState = GameState::THREE_D;
+        }
     }
 
     else if (is2D && (*seed != 0)){
@@ -78,70 +111,71 @@ void State::Opened(int* seed, float* scale2){
 }
 
 void State::three_d(){
-
-    camera.position = player.player_view_pos;
-    camera.target   = (Vector3){
-        player.player_view_pos.x,
-        player.player_view_pos.y,
-        player.player_view_pos.z
-    } + player.y_axis_display;
-
-    BeginMode3D(camera);
-
     if (!three_d_initialized){
-        ChunkKDT_init(&chunkTree);
+        KDTChunkTree_clear(&kdtchunkTree);
+        PRChunkTree_clear(&prchunkTree);
 
-        ChunkKDT_Perlin(&chunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed); //err
+        if (isPR) PRChunkTree_init(&prchunkTree, (Vector3){ 0, 0, 0 }, (Vector3){ 400, 0, 400 });
+        if (isKDT) KDTChunkTree_init(&kdtchunkTree);
 
-        ChunkKDT_setVis(&chunkTree);
-        ChunkKDT_translateVis(&chunkTree, player.player_view_pos, -1);
+		reset_player();
+
+//		player.y_axis_display = player.y_axis;
+//		player.z_axis_display = player.z_axis;
+//		player.x_axis_move = player.x_axis;
+//		player.z_axis_move = player.z_axis;
+//		player.yaw = 0.0f;
+//		player.player_pos = player.player_origin;
+//		player.player_view_pos = Vector3Add(player.player_pos, (Vector3){0, 1.6f, 0});
+//		player.player_velocity = (Vector3){0, 0, 0};
+
+        if (isPR) PRChunkTree_perlin(&prchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed); //err
+        if (isKDT) KDTChunkTree_Perlin(&kdtchunkTree, 0, 0, PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SCALE, player.seed);
+
+
+        if (isPR) PRChunkTree_initLoaded(&prchunkTree);
+        if (isPR) PRChunkTree_translateLoaded(&prchunkTree, player.player_view_pos, -1);
+
+        if (isKDT) KDTChunkTree_initLoaded(&kdtchunkTree);
+	    if (isKDT) KDTChunkTree_translateLoaded(&kdtchunkTree, player.player_view_pos, -1);
 
         three_d_initialized = true;
     }
 
-    KDTNode* node = ChunkKDT_find(&chunkTree, player.player_pos);
-    ArrChunk* chunk = node ? node->chunk : nullptr;
+    PRChunk* pr_node   = nullptr;
+    PRChunk* pr_chunk  = nullptr;
+    if (isPR) pr_node = PRChunkTree_searchRaw_Chunk(&prchunkTree, player.player_pos);
 
-	SetTargetFPS(60);
+    KDTChunk* kdt_node = nullptr;
+    KDTChunk* kdt_chunk = nullptr;
+    if (isKDT) kdt_chunk = KDTChunkTree_searchRaw_Chunk(&kdtchunkTree, player.player_pos);
 
-	//HideCursor();
 
-    // load new chunks (got rid of block, fix)
-
-//		for (int i = -1; i < 2; i ++) {
-//			for (int j = -1; j < 2; j ++) {
-//				Vector3 o = Vector3Add(chunk->origin, (Vector3){16*i, 0, 16*j});
-//				if (!ChunkKDT_search(&chunkTree, o)) {
-//					ArrChunk* tmp = ChunkKDT_insertNew(&chunkTree, o)->chunk;
-//					ArrChunk_block(tmp, (Vector3){0, 0, 0}, (Vector3){15, 9, 15});
-//					ArrChunk_setVis(tmp);
-//					ArrChunk_translateVis(tmp, player_view_pos, -1);
-//					ArrChunk_rotateVis(tmp, x_axis, -1*pitch);
-//					ArrChunk_rotateVis(tmp, y_axis_display, -1*yaw);
-//				}
-//			}
-//		}
 
     if (IsKeyDown(KEY_LEFT)) {
-        ChunkKDT_rotateVis(&chunkTree, player.y_axis_display, player.nrotation_speed);
+        if (isPR) PRChunkTree_rotateLoaded(&prchunkTree, player.y_axis_display, player.nrotation_speed);
+        if (isKDT) KDTChunkTree_rotateLoaded(&kdtchunkTree, player.y_axis_display, player.nrotation_speed);
         player.x_axis_move = Vector3RotateByAxisAngle(player.x_axis_move, player.y_axis, player.rotation_speed);
         player.z_axis_move = Vector3RotateByAxisAngle(player.z_axis_move, player.y_axis, player.rotation_speed);
         player.yaw += player.rotation_speed;
     }
     if (IsKeyDown(KEY_RIGHT)) {
-        ChunkKDT_rotateVis(&chunkTree, player.y_axis_display, player.rotation_speed);
+        if (isPR) PRChunkTree_rotateLoaded(&prchunkTree, player.y_axis_display, player.rotation_speed);
+        if (isKDT) KDTChunkTree_rotateLoaded(&kdtchunkTree, player.y_axis_display, player.rotation_speed);
         player.x_axis_move = Vector3RotateByAxisAngle(player.x_axis_move, player.y_axis, player.nrotation_speed);
         player.z_axis_move = Vector3RotateByAxisAngle(player.z_axis_move, player.y_axis, player.nrotation_speed);
         player.yaw += player.nrotation_speed;
     }
     if (IsKeyDown(KEY_UP) && player.y_axis_display.z > -0.98f) {
-        ChunkKDT_rotateVis(&chunkTree, player.x_axis, player.nrotation_speed);
+        if (isPR) PRChunkTree_rotateLoaded(&prchunkTree, player.x_axis, player.nrotation_speed);
+        if (isKDT) KDTChunkTree_rotateLoaded(&kdtchunkTree, player.x_axis, player.nrotation_speed);
         player.y_axis_display = Vector3RotateByAxisAngle(player.y_axis_display, player.x_axis, player.nrotation_speed);
         player.z_axis_display = Vector3RotateByAxisAngle(player.z_axis_display, player.x_axis, player.nrotation_speed);
         player.pitch += player.rotation_speed;
     }
     if (IsKeyDown(KEY_DOWN) && player.y_axis_display.z < 0.98f) {
-        ChunkKDT_rotateVis(&chunkTree, player.x_axis, player.rotation_speed);
+        if (isPR) PRChunkTree_rotateLoaded(&prchunkTree, player.x_axis, player.rotation_speed);
+        if (isKDT) KDTChunkTree_rotateLoaded(&kdtchunkTree, player.x_axis, player.rotation_speed);
         player.y_axis_display = Vector3RotateByAxisAngle(player.y_axis_display, player.x_axis, player.rotation_speed);
         player.z_axis_display = Vector3RotateByAxisAngle(player.z_axis_display, player.x_axis, player.rotation_speed);
         player.pitch += player.nrotation_speed;
@@ -150,48 +184,174 @@ void State::three_d(){
     Vector3 dtranslate = { 0, 0, 0 };
 
     if (IsKeyDown(KEY_A)) {
-//			ChunkKDT_translateVis(&chunkTree, x_axis, move_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.move_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.nmove_speed));
         player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
-        while (ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
-//				ChunkKDT_translateVis(&chunkTree, x_axis, adjust_speed*nmove_speed);
+        while ((isPR) && (PRChunk_searchRaw(pr_chunk, player.player_pos) || PRChunk_searchRaw(pr_chunk, player.player_view_pos))) {
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.nmove_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.move_speed));
             player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
+        while ((isKDT) && (KDTChunk_searchRaw(kdt_chunk, player.player_pos) || KDTChunk_searchRaw(kdt_chunk, player.player_view_pos))) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.nmove_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.move_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        }
     }
 
     if (IsKeyDown(KEY_D)) {
-//			ChunkKDT_translateVis(&chunkTree, x_axis, nmove_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.nmove_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.move_speed));
         player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
-        while(ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
-//				ChunkKDT_translateVis(&chunkTree, x_axis, adjust_speed*move_speed);
+        while((isPR) && (PRChunk_searchRaw(pr_chunk, player.player_pos) || PRChunk_searchRaw(pr_chunk, player.player_view_pos))) {
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.move_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.nmove_speed));
             player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
+        while((isKDT) && (KDTChunk_searchRaw(kdt_chunk, player.player_pos) || KDTChunk_searchRaw(kdt_chunk, player.player_view_pos))) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.x_axis, player.adjust_speed*player.move_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.x_axis_move, player.adjust_speed*player.nmove_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        }
     }
 
+	if (IsKeyDown(KEY_W)) {
+        dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.move_speed));
+        player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.nmove_speed));
+        player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
+        while((isPR) && (PRChunk_searchRaw(pr_chunk, player.player_pos) || PRChunk_searchRaw(pr_chunk, player.player_view_pos))) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.nmove_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.move_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
+        }
+        while ((isKDT) && (KDTChunk_searchRaw(kdt_chunk, player.player_pos) || KDTChunk_searchRaw(kdt_chunk, player.player_view_pos))) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.nmove_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.move_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        }
+    }
 
     if (IsKeyDown(KEY_S)) {
-//			ChunkKDT_translateVis(&chunkTree, z_axis_display, nmove_speed);
         dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.nmove_speed));
         player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.move_speed));
         player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
-        while(ArrChunk_find(chunk, player.player_pos) || ArrChunk_find(chunk, player.player_view_pos)) {
-//				ChunkKDT_translateVis(&chunkTree, z_axis_display, adjust_speed*move_speed);
+        while((isPR) && (PRChunk_searchRaw(pr_chunk, player.player_pos) || PRChunk_searchRaw(pr_chunk, player.player_view_pos))) {
             dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.move_speed));
             player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.nmove_speed));
             player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6f, player.player_pos.z };
         }
+        while((isKDT) && (KDTChunk_searchRaw(kdt_chunk, player.player_pos) || KDTChunk_searchRaw(kdt_chunk, player.player_view_pos))) {
+            dtranslate = Vector3Add(dtranslate, Vector3Scale(player.z_axis_display, player.adjust_speed*player.move_speed));
+            player.player_pos = Vector3Add(player.player_pos, Vector3Scale(player.z_axis_move, player.adjust_speed*player.nmove_speed));
+            player.player_view_pos = (Vector3){ player.player_pos.x, player.player_pos.y + 1.6, player.player_pos.z };
+        }
     }
 
-    ChunkKDT_drawVis(&chunkTree, x_offset, y_offset, scale);
+	// jump
+	if (IsKeyDown(KEY_SPACE) && player.isTouchingFloor) {
+		player.player_velocity.y = player.jump_speed;
+		player.isTouchingFloor = false;
+	}
+
+	// check if no floor beneath player
+	Voxel* beneath_player = nullptr;
+    KDTChunk* kdt_floorChunk = nullptr;
+    PRChunk*  pr_floorChunk = nullptr;
+	for (int i = 0; i < 5; i ++) {
+		Vector3 checkpos = Vector3Add(
+			check_floor[i],
+			(Vector3){ player.player_pos.x, player.player_pos.y - 0.5, player.player_pos.z }
+		);
+		if (isPR) PRChunk* kdt_floorChunk = PRChunkTree_searchRaw_Chunk(&prchunkTree, checkpos);
+        if (isKDT) KDTChunk* pr_floorChunk = KDTChunkTree_searchRaw_Chunk(&kdtchunkTree, checkpos);
+
+        if (isKDT) beneath_player = KDTChunk_searchRaw_Voxel(kdt_floorChunk, checkpos);
+		if (isPR) beneath_player = PRChunk_searchRaw_Voxel(pr_floorChunk, checkpos);
+		if (beneath_player)
+			break;
+	}
+	if (!beneath_player && player.isTouchingFloor) {
+		player.isTouchingFloor = false;
+	}
+
+	if (!player.isTouchingFloor) {
+		Voxel* floor = nullptr;
+		for (int i = 0; i < 5; i ++) {
+			Vector3 checkpos = Vector3Add(
+				check_floor[i],
+				(Vector3){ player.player_pos.x, player.player_pos.y + player.player_velocity.y, player.player_pos.z }
+			);
+			if (isPR) PRChunk* pr_floorChunk = PRChunkTree_searchRaw_Chunk(&prchunkTree, checkpos);
+            if (isKDT) KDTChunk* kdt_floorChunk = KDTChunkTree_searchRaw_Chunk(&kdtchunkTree, checkpos);
+
+			if (isPR) floor = PRChunk_searchRaw_Voxel(pr_floorChunk, checkpos);
+            if (isKDT) floor = KDTChunk_searchRaw_Voxel(kdt_floorChunk, checkpos);
+
+			if (floor)
+				break;
+			checkpos = Vector3Add(check_floor[i], player.player_pos);
+
+			if (isPR) pr_floorChunk = PRChunkTree_searchRaw_Chunk(&prchunkTree, checkpos);
+            if (isKDT) kdt_floorChunk = KDTChunkTree_searchRaw_Chunk(&kdtchunkTree, checkpos);
+			if (isPR) floor = PRChunk_searchRaw_Voxel(pr_floorChunk, checkpos);
+            if (isKDT) floor = KDTChunk_searchRaw_Voxel(kdt_floorChunk, checkpos);
+			if (floor)
+				break;
+		}
+
+		if (floor && player.player_velocity.y < 0) {
+			dtranslate = Vector3Add(dtranslate, Vector3Scale(player.y_axis_display, player.player_pos.y - (floor->origin.y + 1)));
+			player.player_pos.y = floor->origin.y + 1;
+			player.player_view_pos.y = player.player_pos.y + 1.6;
+			player.player_velocity.y = 0.0f;
+			player.isTouchingFloor = true;
+		}
+		else {
+			player.player_pos.y += player.player_velocity.y;
+			player.player_view_pos.y += player.player_velocity.y;
+			dtranslate = Vector3Add(dtranslate, Vector3Scale(player.y_axis_display, -1*player.player_velocity.y));
+			player.player_velocity.y += player.gravity;
+		}
+	}
+
+	// highlight selected voxel
+	selectedVoxel = nullptr;
+	for (int i = 0; i < 30; i ++) {
+        PRChunk* pr_searchChunk = nullptr;
+        KDTChunk* kdt_searchChunk = nullptr;
+
+		Vector3 search_pos = Vector3RotateByAxisAngle(player.z_axis_display, player.y_axis, PI + player.yaw);
+		search_pos = Vector3Add(player.player_view_pos, Vector3Scale(search_pos, i*0.2f));
+
+		if (isPR) PRChunk* pr_searchChunk = PRChunkTree_searchRaw_Chunk(&prchunkTree, search_pos);
+        if (isKDT) KDTChunk* kdt_searchChunk = KDTChunkTree_searchRaw_Chunk(&kdtchunkTree, search_pos);
+
+		if (isPR) selectedVoxel = PRChunk_searchRaw_Voxel(pr_searchChunk, search_pos);
+        if (isKDT) selectedVoxel = KDTChunk_searchRaw_Voxel(kdt_searchChunk, search_pos);
+		if (selectedVoxel)
+			break;
+	}
+
+	if (IsKeyPressed(KEY_Q) || player.player_pos.y < -20) {
+		reset_player();
+//		player.y_axis_display = player.y_axis;
+//		player.z_axis_display = player.z_axis;
+//		player.x_axis_move = player.x_axis;
+//		player.z_axis_move = player.z_axis;
+//		player.yaw = 0.0f;
+//		player.player_pos = player.player_origin;
+//		player.player_view_pos = Vector3Add(player.player_pos, (Vector3){0, 1.6f, 0});
+//		player.player_velocity = (Vector3){0, 0, 0};
+		if (isPR) PRChunkTree_resetLoaded(&prchunkTree);
+        if (isKDT) KDTChunkTree_resetLoaded(&kdtchunkTree);
+		dtranslate = Vector3Scale(player.player_view_pos, -1);
+	}
+
+	if (isPR) PRChunkTree_translateLoaded(&prchunkTree, dtranslate, 1);
+    if (isKDT) KDTChunkTree_translateLoaded(&kdtchunkTree, dtranslate, 1);
+    if (isPR) PRChunkTree_drawLoaded(&prchunkTree, x_offset, y_offset, scale);
+    if (isKDT) KDTChunkTree_drawLoaded(&kdtchunkTree, x_offset, y_offset, scale);
     if (selectedVoxel) Voxel_forceDraw(selectedVoxel, x_offset, y_offset, scale);
-    EndMode3D();
 }
 
 void State::two_d(){
@@ -201,8 +361,9 @@ void State::two_d(){
 
         worldTexture = show_sample(&smp);
 
-        free(pixels);
         worldGenerated = true;
+
+		free(pixels);
     }
     DrawTexture(worldTexture, 0, 0, WHITE);
 }
@@ -241,25 +402,46 @@ void State::Update(){
     Opened(&player.seed, &player.scale2);
 }
 
-void State::ChunkKDT_Perlin(ChunkKDT* tree, int x0, int z0, int x_size, int z_size, float scale, int seed) {
+void State::PRChunkTree_perlin(PRChunkTree* tree, int x0, int z0, int x_size, int z_size, float scale, int seed) {
 	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16, seed);
 	for (int i = 0; i < x_size; i ++) {
 		for (int j = 0; j < z_size; j ++) {
-			KDTNode* node = ChunkKDT_insertNew(tree, (Vector3){(float)((i + x0)*16), 0.0f, (float)((j + z0)*16)});
-			ArrChunk* chunk = node ? node->chunk : nullptr;
+			PRChunkNode* node = PRChunkTree_insertRaw(tree, (Vector3){(float)((i + x0)*16), 0.0f, (float)((j + z0)*16)});
+			PRChunk* chunk = node ? node->chunk : nullptr;
 			if (!chunk)
 				continue;
 			for (int x = 0; x < 16; x++) {
 				for (int z = 0; z < 16; z ++) {
 					int index = (i*16*64 + j*16 + x*64 + z)*4;
 					for (int y = 0; y < pixels[index]*scale; y ++)
-						ArrChunk_emplaceLocal(chunk, (Vector3){(float)x, (float)y, (float)z});
+						PRChunk_insertLocal(chunk, (Vector3){(float)x, (float)y, (float)z});
 				}
 			}
 		}
 	}
 	free(pixels);
 }
+void State::KDTChunkTree_Perlin(KDTChunkTree* tree, uint32_t x0, uint32_t z0, uint32_t x_size, uint32_t z_size, float scale, int seed) {
+	uint8_t* pixels = Perlin_generate(x_size*16, z_size*16, seed);
+	for (uint32_t i = 0; i < x_size; i ++) {
+		for (uint32_t j = 0; j < z_size; j ++) {
+			KDTChunkNode* node = KDTChunkTree_insertRaw(tree, (Vector3){(i + x0)*16, 0, (j + z0)*16});
+			KDTChunk* chunk = node ? node->chunk : nullptr;
+			if (!chunk) {
+				continue;
+			}
+			for (int x = 0; x < 16; x++) {
+				for (int z = 0; z < 16; z ++) {
+					int index = (i*16*64 + j*16 + x*64 + z)*4;
+					for (int y = 0; y < pixels[index]*scale; y ++)
+						KDTChunk_insertLocal(chunk, (Vector3){x, y, z});
+				}
+			}
+		}
+	}
+	free(pixels);  
+}
+
 
 int State::TextBoxGenerator(int x, int y, int id) {
 
@@ -286,7 +468,7 @@ int State::TextBoxGenerator(int x, int y, int id) {
             int number = std::stoi(input[id]);
             input[id].clear();
             activeBox = -1;
-            DrawText("Loading...", 100, 130, 20, BLACK);
+            DrawText("Loading...", 100, 125, 20, BLACK);
             return number;
         }
     }

@@ -1,6 +1,6 @@
 #include "voxel.h"
-#include "arrchunk.h"
-#include "chunk2dtree.h"
+#include "prchunk.h"
+#include "prchunktree.h"
 #include "perlinNoiseGen.h"
 #include "state.h"
 #include "player.h"
@@ -11,12 +11,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-
-
 int main(void) {
 
 	SetTraceLogLevel(LOG_NONE);
-	
+
 	InitWindow(1380, 850, "Perlin-Noise-Visualizer");
 	SetTargetFPS(60);
 
